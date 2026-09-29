@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import sqlite3
-import psycopg
 import os
 from werkzeug.utils import secure_filename
 
@@ -42,6 +41,8 @@ def get_db():
     database_url = os.environ.get("DATABASE_URL")
 
     if database_url:
+        import psycopg
+
         return psycopg.connect(
             database_url,
             row_factory=hybrid_row_factory
@@ -2616,8 +2617,10 @@ def teacher_logout():
 
 
 
+# Initialize database when the application starts
+init_db()
+
 if __name__ == "__main__":
-    init_db()
     app.run(
         host="0.0.0.0",
         port=int(os.environ.get("PORT", 5000)),
