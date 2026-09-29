@@ -33,8 +33,10 @@ class HybridRow(dict):
 
 
 def hybrid_row_factory(cursor):
-    columns = [column.name for column in cursor.description]
-    return lambda values: HybridRow(columns, values)
+    return lambda values: HybridRow(
+        [column.name for column in cursor.description],
+        values
+    )
 
 
 def get_db():
