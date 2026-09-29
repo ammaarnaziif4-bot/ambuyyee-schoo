@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Director Dashboard | AMBUYEE SCHOOL</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #10243d;
+        }
+
+        .layout {
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #071d38;
+            color: white;
+            padding: 24px 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 35px;
+        }
+
+        .logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #cfa23b;
+            color: #071d38;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+        }
+
+        .brand h2 {
+            margin: 0;
+            font-size: 17px;
+        }
+
+        .brand span {
+            font-size: 10px;
+            color: #cfa23b;
+            letter-spacing: 2px;
+        }
+
+        .menu a {
+            display: block;
+            color: #b9c6d8;
+            text-decoration: none;
+            padding: 13px 14px;
+            border-radius: 9px;
+            margin-bottom: 7px;
+            font-size: 13px;
+        }
+
+        .menu a:hover,
+        .menu a.active {
+            background: #cfa23b;
+            color: #071d38;
+        }
+
+        .logout {
+            display: block;
+            margin-top: 40px;
+            color: #ffb4b4;
+            text-decoration: none;
+            padding: 13px 14px;
+            font-size: 13px;
+        }
+
+        .main {
+            flex: 1;
+            padding: 30px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .topbar h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .topbar p {
+            margin: 6px 0 0;
+            color: #7b8798;
+        }
+
+        .director-name {
+            background: white;
+            padding: 11px 16px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(7,29,56,.06);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 22px;
+            box-shadow: 0 5px 20px rgba(7,29,56,.06);
+        }
+
+        .card span {
+            color: #7b8798;
+            font-size: 12px;
+        }
+
+        .card strong {
+            display: block;
+            margin-top: 10px;
+            font-size: 30px;
+            color: #071d38;
+        }
+
+        .section {
+            margin-top: 25px;
+            background: white;
+            border-radius: 15px;
+            padding: 24px;
+            box-shadow: 0 5px 20px rgba(7,29,56,.06);
+        }
+
+        .section h2 {
+            margin-top: 0;
+        }
+
+        @media (max-width: 800px) {
+            .layout {
+                display: block;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .menu {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .menu a {
+                margin: 0;
+            }
+
+            .logout {
+                margin-top: 10px;
+            }
+
+            .main {
+                padding: 18px 12px;
+            }
+
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .topbar {
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="logo">AS</div>
+            <div>
+                <h2>AMBUYEE</h2>
+                <span>SCHOOL</span>
+            </div>
+        </div>
+
+        <nav class="menu">
+            <a href="/director/dashboard" class="active">▣ Dashboard</a>
+            <a href="/director/students">♙ Students</a>
+            <a href="/director/applications">✓ Applications</a>
+            <a href="/director/teachers">♟ Teachers</a>
+            <a href="/director/academic-years">▣ Academic Years</a>
+<a href="/director/registration-targets">📊 Registration Targets</a>
+            <a href="/director/restore-data">↻ Restore Data</a>
+            <a href="/director/settings">⚙ Settings</a>
+        </nav>
+
+        <a href="/director/logout" class="logout">↪ Logout</a>
+
+    </aside>
+
+    <main class="main">
+
+        <div class="topbar">
+            <div>
+                <h1>Director Dashboard</h1>
+                <p>School management overview</p>
+            </div>
+
+            <div class="director-name">
+                {{ session.get("director_name", "Director") }}
+            </div>
+        </div>
+
+        <section class="cards">
+
+            <div class="card">
+                <span>Total Students</span>
+                <strong>{{ total_students }}</strong>
+            </div>
+
+            <div class="card">
+                <span>Pending Applications</span>
+                <strong>{{ pending_students }}</strong>
+            </div>
+
+            <div class="card">
+                <span>Passed Students</span>
+                <strong>{{ passed_students }}</strong>
+            </div>
+
+            <div class="card">
+                <span>Total Teachers</span>
+                <strong>{{ total_teachers }}</strong>
+            </div>
+
+        </section>
+
+        <section class="section">
+            <h2>Registration Overview</h2>
+
+            <p>
+                Failed Applications:
+                <strong>{{ failed_students }}</strong>
+            </p>
+
+            <p>
+                Director can manage students, teachers, academic years,
+                applications and school data from this dashboard.
+            </p>
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

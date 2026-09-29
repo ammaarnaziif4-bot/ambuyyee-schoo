@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academic Years | Director</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f4f7fb;
+    color:#10243d;
+}
+
+.header{
+    background:#071d38;
+    color:white;
+    padding:22px;
+}
+
+.header a{
+    color:#cfa23b;
+    text-decoration:none;
+}
+
+.container{
+    max-width:850px;
+    margin:25px auto;
+    padding:0 15px;
+}
+
+.card{
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    margin-bottom:18px;
+    box-shadow:0 5px 20px #071d3810;
+}
+
+input{
+    padding:12px;
+    width:100%;
+    box-sizing:border-box;
+    border:1px solid #ddd;
+    border-radius:8px;
+    margin:8px 0;
+}
+
+button{
+    padding:11px 16px;
+    border:0;
+    border-radius:8px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.create{
+    background:#071d38;
+    color:white;
+}
+
+.restore{
+    background:#16834b;
+    color:white;
+}
+
+.year{
+    padding:18px 0;
+    border-bottom:1px solid #eee;
+}
+
+.year:last-child{
+    border-bottom:0;
+}
+
+.year-name{
+    font-size:18px;
+    font-weight:bold;
+}
+
+.active{
+    color:#16834b;
+    font-weight:bold;
+}
+
+.archived{
+    color:#777;
+    font-size:14px;
+}
+
+.count{
+    margin-top:7px;
+    color:#64748b;
+    font-size:14px;
+}
+
+.actions{
+    margin-top:12px;
+}
+
+.warning{
+    background:#fff8e6;
+    border-left:4px solid #cfa23b;
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:18px;
+    line-height:1.5;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <a href="/director/dashboard">← Dashboard</a>
+    <h1>Academic Years</h1>
+</div>
+
+<div class="container">
+
+<div class="card">
+
+    <h2>Current Academic Year</h2>
+
+    {% if active_year %}
+        <div class="year-name">
+            {{ active_year["year_name"] }}
+        </div>
+
+        <div class="active">
+            ● ACTIVE
+        </div>
+    {% else %}
+        <p>No active academic year.</p>
+    {% endif %}
+
+</div>
+
+
+<div class="card">
+
+    <h2>Start New Academic Year</h2>
+
+    <div class="warning">
+        Starting a new academic year will archive the current year.
+        Old student records will NOT be deleted.
+        Teachers will see students from the newly active year only.
+    </div>
+
+    <form method="POST">
+
+        <input
+            name="year_name"
+            placeholder="Example: 2027/2028"
+            required
+        >
+
+        <button
+            type="submit"
+            class="create"
+        >
+            START NEW ACADEMIC YEAR
+        </button>
+
+    </form>
+
+</div>
+
+
+<div class="card">
+
+    <h2>Academic Year History</h2>
+
+    {% for year in years %}
+
+    <div class="year">
+
+        <div class="year-name">
+            {{ year["year_name"] }}
+        </div>
+
+        {% if year["is_active"] %}
+
+            <div class="active">
+                ● ACTIVE
+            </div>
+
+        {% else %}
+
+            <div class="archived">
+                Archived
+            </div>
+
+            <div class="actions">
+
+                <form
+                    method="POST"
+                    action="/director/academic-years/{{ year['id'] }}/restore"
+                >
+
+                    <button
+                        type="submit"
+                        class="restore"
+                        onclick="return confirm('Restore this academic year? Teachers will see students from this year again.')"
+                    >
+                        RESTORE THIS YEAR
+                    </button>
+
+                </form>
+
+            </div>
+
+        {% endif %}
+
+        <div class="count">
+            Students in this year:
+            <strong>{{ year["student_count"] }}</strong>
+        </div>
+
+    </div>
+
+    {% else %}
+
+        <p>No academic years found.</p>
+
+    {% endfor %}
+
+</div>
+
+</div>
+
+</body>
+</html>

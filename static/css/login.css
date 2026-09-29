@@ -1,0 +1,794 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #041a3a;
+    color: #ffffff;
+}
+
+
+/* =========================
+   PAGE
+========================= */
+
+.login-page {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 55px 24px;
+    background:
+        radial-gradient(
+            circle at 18% 25%,
+            rgba(55, 103, 160, .30),
+            transparent 35%
+        ),
+        radial-gradient(
+            circle at 85% 80%,
+            rgba(10, 69, 133, .25),
+            transparent 38%
+        ),
+        #041a3a;
+}
+
+
+/* =========================
+   SCHOOL BACKGROUND
+========================= */
+
+.background-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    height: 430px;
+
+    background-image:
+        url("../uploads/ambuyyee_school_gate.png");
+
+    background-size: cover;
+    background-position: center;
+
+    opacity: .62;
+
+    filter:
+        brightness(.72)
+        saturate(.90);
+
+    transform: none;
+
+    border-radius: 0 0 35px 35px;
+}
+
+.background-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    height: 430px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(3, 22, 49, .28),
+            rgba(3, 25, 55, .82)
+        );
+
+    border-radius: 0 0 35px 35px;
+}
+
+
+/* =========================
+   GOLD DECORATION
+========================= */
+
+.gold-curve {
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    border: 7px solid rgba(231, 177, 62, .90);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.curve-top {
+    top: -315px;
+    left: -170px;
+}
+
+.curve-bottom {
+    right: -210px;
+    bottom: -315px;
+}
+
+
+/* =========================
+   MAIN WRAPPER
+========================= */
+
+.login-wrapper {
+    position: relative;
+    z-index: 5;
+
+    width: 100%;
+    max-width: 1040px;
+
+    text-align: center;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.school-header {
+    position: relative;
+
+    margin-bottom: 26px;
+    padding: 35px 20px 28px;
+
+    text-shadow:
+        0 3px 12px rgba(0,0,0,.75);
+}
+
+.school-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.logo-shield {
+    width: 82px;
+    height: 94px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    clip-path: polygon(
+        50% 0%,
+        91% 12%,
+        91% 58%,
+        76% 80%,
+        50% 100%,
+        24% 80%,
+        9% 58%,
+        9% 12%
+    );
+
+    background:
+        linear-gradient(
+            145deg,
+            #f3c95c,
+            #b47d1c
+        );
+
+    box-shadow:
+        0 12px 30px rgba(0, 0, 0, .30);
+}
+
+.logo-shield::before {
+    content: "";
+    position: absolute;
+
+    width: 62px;
+    height: 74px;
+
+    clip-path: inherit;
+
+    background: #06275a;
+}
+
+.book {
+    position: relative;
+    z-index: 2;
+
+    color: #f7cb62;
+
+    font-size: 31px;
+    transform: scaleX(1.25);
+}
+
+.school-header h1 {
+    margin: 0;
+
+    font-size: clamp(30px, 4vw, 52px);
+    font-weight: 900;
+    letter-spacing: 1px;
+
+    color: #ffffff;
+}
+
+.school-header p {
+    margin: 8px 0 0;
+
+    color: #ffffff;
+
+    font-size: clamp(14px, 2vw, 20px);
+    font-weight: 500;
+}
+
+.gold-line {
+    width: 96px;
+    height: 4px;
+
+    margin: 24px auto 0;
+
+    border-radius: 20px;
+
+    background: #e7b13e;
+
+    box-shadow:
+        0 0 20px rgba(231, 177, 62, .30);
+}
+
+
+/* =========================
+   LOGIN PANEL
+========================= */
+
+.login-panel {
+    margin-top: 5px;
+
+    padding: 34px 38px 30px;
+
+    border: 2px solid rgba(231, 177, 62, .88);
+    border-radius: 22px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(6, 42, 91, .94),
+            rgba(3, 29, 66, .94)
+        );
+
+    box-shadow:
+        0 30px 80px rgba(0, 0, 0, .38),
+        inset 0 1px 0 rgba(255,255,255,.06);
+
+    backdrop-filter: blur(8px);
+}
+
+
+/* =========================
+   HEADING
+========================= */
+
+.panel-heading {
+    margin-bottom: 30px;
+}
+
+.small-gold-line {
+    width: 76px;
+    height: 4px;
+
+    margin: 0 auto 18px;
+
+    border-radius: 20px;
+
+    background: #e7b13e;
+}
+
+.panel-heading h2 {
+    margin: 0;
+
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 800;
+}
+
+.panel-heading p {
+    margin: 8px 0 0;
+
+    color: #b8c9e2;
+
+    font-size: 15px;
+}
+
+
+/* =========================
+   OPTIONS
+========================= */
+
+.login-options {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 22px;
+}
+
+.login-option {
+    position: relative;
+
+    min-height: 285px;
+
+    padding: 28px 18px 24px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-decoration: none;
+    color: #ffffff;
+
+    border: 1px solid rgba(68, 151, 235, .85);
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(8, 58, 120, .88),
+            rgba(4, 39, 83, .92)
+        );
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 12px 28px rgba(0,0,0,.20);
+
+    transition:
+        transform .25s ease,
+        border-color .25s ease,
+        box-shadow .25s ease;
+}
+
+.login-option:hover {
+    transform: translateY(-8px);
+
+    border-color: #e7b13e;
+
+    box-shadow:
+        0 20px 40px rgba(0,0,0,.30),
+        0 0 25px rgba(231,177,62,.12);
+}
+
+
+/* =========================
+   ICON
+========================= */
+
+.option-icon {
+    width: 88px;
+    height: 88px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 18px;
+
+    border: 2px solid #e7b13e;
+    border-radius: 20px;
+
+    background:
+        rgba(5, 30, 66, .72);
+
+    box-shadow:
+        0 8px 20px rgba(0,0,0,.20);
+}
+
+.option-icon svg {
+    width: 50px;
+    height: 50px;
+
+    fill: #f4c34f;
+    stroke: #f4c34f;
+
+    stroke-width: 3;
+}
+
+
+/* =========================
+   TEXT
+========================= */
+
+.login-option h3 {
+    margin: 0 0 7px;
+
+    font-size: 23px;
+    font-weight: 800;
+}
+
+.login-option span {
+    color: #b9cbe4;
+
+    font-size: 14px;
+}
+
+
+/* =========================
+   ARROW
+========================= */
+
+.arrow-button {
+    width: 45px;
+    height: 45px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 20px;
+
+    border-radius: 50%;
+
+    background: #f1bb42;
+    color: #09234b;
+
+    font-size: 25px;
+    font-weight: 900;
+
+    box-shadow:
+        0 8px 20px rgba(231,177,62,.25);
+}
+
+
+/* =========================
+   REGISTER
+========================= */
+
+.register-area {
+    margin-top: 30px;
+    padding-top: 22px;
+
+    border-top: 1px solid rgba(255,255,255,.12);
+
+    font-size: 15px;
+    color: #c0cee2;
+}
+
+.register-area a {
+    margin-left: 7px;
+
+    color: #f3c34f;
+
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.register-area a:hover {
+    text-decoration: underline;
+}
+
+.register-area strong {
+    margin-left: 5px;
+    font-size: 18px;
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+.login-footer {
+    margin-top: 48px;
+    padding-top: 20px;
+
+    border-top: 1px solid rgba(255,255,255,.12);
+
+    color: #91a5c1;
+
+    font-size: 12px;
+}
+
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 850px) {
+
+    .login-page {
+        padding: 42px 18px;
+    }
+
+    .login-panel {
+        padding: 30px 24px 26px;
+    }
+
+    .login-options {
+        gap: 15px;
+    }
+
+    .login-option {
+        min-height: 245px;
+    }
+
+    .option-icon {
+        width: 72px;
+        height: 72px;
+    }
+
+    .option-icon svg {
+        width: 42px;
+        height: 42px;
+    }
+
+    .login-option h3 {
+        font-size: 19px;
+    }
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 650px) {
+
+    .login-page {
+        align-items: flex-start;
+        padding: 0 14px 30px;
+    }
+
+    .login-wrapper {
+        max-width: 100%;
+    }
+
+    .school-header {
+        margin-bottom: 20px;
+        padding: 105px 10px 24px;
+    }
+
+    .logo-shield {
+        width: 65px;
+        height: 76px;
+    }
+
+    .logo-shield::before {
+        width: 49px;
+        height: 60px;
+    }
+
+    .school-header h1 {
+        font-size: 27px;
+    }
+
+    .school-header p {
+        font-size: 12px;
+    }
+
+    .gold-line {
+        margin-top: 16px;
+    }
+
+    .login-panel {
+        padding: 25px 14px 22px;
+        border-radius: 18px;
+    }
+
+    .panel-heading {
+        margin-bottom: 22px;
+    }
+
+    .panel-heading h2 {
+        font-size: 22px;
+    }
+
+    .panel-heading p {
+        font-size: 12px;
+    }
+
+    .login-options {
+        grid-template-columns: 1fr;
+        gap: 13px;
+    }
+
+    .login-option {
+        min-height: 125px;
+
+        display: grid;
+
+        grid-template-columns: 70px 1fr 44px;
+
+        grid-template-rows: auto auto;
+
+        column-gap: 14px;
+
+        padding: 15px;
+
+        text-align: left;
+    }
+
+    .option-icon {
+        grid-row: 1 / 3;
+
+        width: 65px;
+        height: 65px;
+
+        margin: 0;
+    }
+
+    .option-icon svg {
+        width: 38px;
+        height: 38px;
+    }
+
+    .login-option h3 {
+        align-self: end;
+
+        margin: 0;
+
+        font-size: 17px;
+    }
+
+    .login-option span {
+        align-self: start;
+
+        font-size: 11px;
+    }
+
+    .arrow-button {
+        grid-column: 3;
+        grid-row: 1 / 3;
+
+        align-self: center;
+
+        width: 40px;
+        height: 40px;
+
+        margin: 0;
+
+        font-size: 21px;
+    }
+
+    .register-area {
+        font-size: 11px;
+    }
+
+    .login-footer {
+        margin-top: 28px;
+    }
+
+    .curve-top {
+        top: -330px;
+        left: -250px;
+    }
+
+    .curve-bottom {
+        right: -250px;
+        bottom: -330px;
+    }
+}
+
+/* =========================================================
+   AMBUYEE LOGIN — FULL SCHOOL IMAGE HERO
+   ========================================================= */
+
+.login-panel {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Full-width school image */
+.school-image {
+    position: relative;
+    width: calc(100% + 0px);
+    height: 360px;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 0 0 28px 28px;
+    background: #071b3a;
+}
+
+/* Make the real school image fill the entire area */
+.school-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Dark blue overlay for readability */
+.school-image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(4, 20, 45, 0.30) 0%,
+            rgba(4, 20, 45, 0.42) 45%,
+            rgba(4, 20, 45, 0.88) 100%
+        );
+    pointer-events: none;
+}
+
+/* Put school branding over the image */
+.school-mark {
+    position: absolute;
+    z-index: 5;
+    top: 55px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* School name over image */
+.school-name {
+    position: absolute;
+    z-index: 5;
+    top: 150px;
+    left: 20px;
+    right: 20px;
+    text-align: center;
+    color: #ffffff;
+    text-shadow: 0 3px 15px rgba(0,0,0,.65);
+}
+
+.school-name h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(25px, 5vw, 42px);
+    font-weight: 900;
+    letter-spacing: 1.8px;
+}
+
+.school-name p {
+    margin: 9px 0 0;
+    color: #f3d27a;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .5px;
+}
+
+/* Gold separator also sits on image */
+.school-image + .gold-line {
+    position: relative;
+    z-index: 6;
+    margin-top: -42px;
+}
+
+/* Keep login content clean below image */
+.login-panel > h2,
+.login-panel > .login-subtitle,
+.login-panel > .login-options,
+.login-panel > .register-text,
+.login-panel > .footer {
+    position: relative;
+    z-index: 3;
+}
+
+/* Login heading */
+.login-panel > h2 {
+    margin-top: 28px;
+}
+
+/* Mobile */
+@media (max-width: 650px) {
+
+    .school-image {
+        height: 330px;
+        border-radius: 0 0 24px 24px;
+    }
+
+    .school-mark {
+        top: 48px;
+    }
+
+    .school-name {
+        top: 140px;
+    }
+
+    .school-name h1 {
+        font-size: 26px;
+    }
+
+    .school-name p {
+        font-size: 11px;
+    }
+}
+

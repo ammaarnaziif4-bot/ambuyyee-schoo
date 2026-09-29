@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Registration - Ambuyyee School</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #172033;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* =========================
+           SIDEBAR
+        ========================= */
+
+        .sidebar {
+            width: 245px;
+            min-height: 100vh;
+            background: #061b32;
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            padding: 20px 15px;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 8px 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #f5c542;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #061b32;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .brand-text strong {
+            display: block;
+            font-size: 14px;
+            letter-spacing: .3px;
+        }
+
+        .brand-text small {
+            display: block;
+            color: #9fb0c4;
+            font-size: 9px;
+            margin-top: 3px;
+        }
+
+        .menu {
+            margin-top: 25px;
+        }
+
+        .menu-title {
+            color: #71849b;
+            font-size: 10px;
+            text-transform: uppercase;
+            margin: 0 10px 10px;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: #b9c7d7;
+            padding: 12px 13px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            font-size: 13px;
+            transition: .2s;
+        }
+
+        .menu a:hover {
+            background: rgba(255,255,255,.08);
+            color: white;
+        }
+
+        .menu a.active {
+            background: #ffffff;
+            color: #061b32;
+            font-weight: 600;
+        }
+
+        .menu-icon {
+            width: 18px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* =========================
+           MAIN AREA
+        ========================= */
+
+        .main {
+            margin-left: 245px;
+            width: calc(100% - 245px);
+            min-height: 100vh;
+        }
+
+        /* =========================
+           TOP BAR
+        ========================= */
+
+        .topbar {
+            height: 70px;
+            background: white;
+            border-bottom: 1px solid #e5eaf1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .search {
+            width: 330px;
+            height: 38px;
+            background: #f5f7fa;
+            border: 1px solid #e8edf3;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+            color: #8290a1;
+        }
+
+        .search input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 100%;
+            font-size: 12px;
+        }
+
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .notification {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            color: #34445a;
+        }
+
+        .notification-dot {
+            position: absolute;
+            right: 3px;
+            top: 3px;
+            width: 7px;
+            height: 7px;
+            background: #e84b4b;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 12px;
+            color: #29374a;
+        }
+
+        .profile-photo {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #dce6f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #18314d;
+        }
+
+        /* =========================
+           CONTENT
+        ========================= */
+
+        .content {
+            padding: 30px;
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        .page-title {
+            margin-bottom: 24px;
+        }
+
+        .page-title h1 {
+            font-size: 25px;
+            color: #172033;
+            margin-bottom: 7px;
+        }
+
+        .page-title p {
+            color: #7b8797;
+            font-size: 13px;
+        }
+
+        /* =========================
+           STEP BAR
+        ========================= */
+
+        .steps {
+            background: white;
+            border: 1px solid #e3e8ef;
+            border-radius: 12px;
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .step:last-child {
+            flex: 0.7;
+        }
+
+        .step-circle {
+            width: 31px;
+            height: 31px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            background: #edf1f6;
+            color: #8491a2;
+            z-index: 2;
+        }
+
+        .step.active .step-circle {
+            background: #1167d8;
+            color: white;
+        }
+
+        .step-text {
+            margin-left: 8px;
+        }
+
+        .step-text strong {
+            display: block;
+            font-size: 11px;
+            color: #344256;
+        }
+
+        .step-text span {
+            font-size: 9px;
+            color: #99a4b3;
+        }
+
+        .step.active .step-text strong {
+            color: #1167d8;
+        }
+
+        .step-line {
+            height: 1px;
+            background: #e0e5ec;
+            flex: 1;
+            margin: 0 15px;
+        }
+
+        /* =========================
+           REGISTRATION GRID
+        ========================= */
+
+        .registration-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e3e8ef;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(20, 40, 70, .03);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 22px;
+        }
+
+        .card-header h2 {
+            font-size: 16px;
+            color: #1b2738;
+        }
+
+        .card-header p {
+            color: #8a95a5;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .required-note {
+            font-size: 10px;
+            color: #8a95a5;
+        }
+
+        /* =========================
+           FORM
+        ========================= */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 17px 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #344256;
+            margin-bottom: 7px;
+        }
+
+        label span {
+            color: #e34848;
+        }
+
+        input,
+        select {
+            height: 42px;
+            width: 100%;
+            border: 1px solid #dce2ea;
+            border-radius: 7px;
+            padding: 0 12px;
+            outline: none;
+            color: #283548;
+            background: white;
+            font-size: 12px;
+            transition: .2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #1167d8;
+            box-shadow: 0 0 0 3px rgba(17,103,216,.08);
+        }
+
+        input::placeholder {
+            color: #aab3bf;
+        }
+
+        .field-help {
+            color: #9aa4b2;
+            font-size: 9px;
+            margin-top: 5px;
+        }
+
+        /* =========================
+           SECTION BUTTONS
+        ========================= */
+
+        .section-options {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+
+        .section-option {
+            position: relative;
+        }
+
+        .section-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .section-option label {
+            width: 39px;
+            height: 36px;
+            border: 1px solid #dce2ea;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            cursor: pointer;
+            color: #667386;
+            font-size: 11px;
+            font-weight: 600;
+            transition: .2s;
+        }
+
+        .section-option input:checked + label {
+            background: #1167d8;
+            color: white;
+            border-color: #1167d8;
+        }
+
+        /* =========================
+           STREAM
+        ========================= */
+
+        .stream-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .stream-btn {
+            border: 1px solid #dce2ea;
+            background: white;
+            color: #617083;
+            padding: 9px 18px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .stream-btn.active {
+            border-color: #1167d8;
+            background: #eef5ff;
+            color: #1167d8;
+            font-weight: 600;
+        }
+
+        /* =========================
+           RIGHT SIDE
+        ========================= */
+
+        .side-card {
+            background: white;
+            border: 1px solid #e3e8ef;
+            border-radius: 12px;
+            overflow: hidden;
+            height: fit-content;
+        }
+
+        .student-photo-area {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .photo-preview {
+            width: 150px;
+            height: 175px;
+            margin: 0 auto 15px;
+            background: #eef2f6;
+            border: 1px dashed #bdc7d3;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #8793a2;
+            overflow: hidden;
+        }
+
+        .photo-preview-icon {
+            font-size: 32px;
+            margin-bottom: 7px;
+        }
+
+        .photo-preview span {
+            font-size: 10px;
+        }
+
+        .photo-input {
+            display: none;
+        }
+
+        .upload-photo {
+            display: inline-block;
+            background: #061b32;
+            color: white;
+            padding: 9px 16px;
+            border-radius: 6px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .upload-photo:hover {
+            background: #102f4e;
+        }
+
+        .school-name {
+            font-size: 9px;
+            color: #8c97a6;
+            margin-top: 12px;
+        }
+
+        /* =========================
+           FEE CARD
+        ========================= */
+
+        .fee-card {
+            margin: 0 20px 20px;
+            background: #f8fafc;
+            border: 1px solid #e4e9ef;
+            border-radius: 9px;
+            padding: 17px;
+        }
+
+        .fee-title {
+            font-size: 10px;
+            color: #7c8898;
+            margin-bottom: 9px;
+        }
+
+        .fee-amount {
+            font-size: 25px;
+            font-weight: 700;
+            color: #182a40;
+        }
+
+        .fee-currency {
+            font-size: 11px;
+            color: #7c8898;
+            margin-left: 3px;
+        }
+
+        .fee-status {
+            margin-top: 9px;
+            font-size: 9px;
+            color: #e09b19;
+            background: #fff8e7;
+            display: inline-block;
+            padding: 4px 7px;
+            border-radius: 4px;
+        }
+
+        /* =========================
+           DOCUMENTS
+        ========================= */
+
+        .documents-card {
+            margin-top: 20px;
+        }
+
+        .document-box {
+            border: 1px dashed #cbd4df;
+            border-radius: 8px;
+            padding: 18px;
+            text-align: center;
+            background: #fbfcfe;
+        }
+
+        .document-box-icon {
+            font-size: 25px;
+            margin-bottom: 7px;
+        }
+
+        .document-box strong {
+            display: block;
+            font-size: 11px;
+            color: #344256;
+            margin-bottom: 5px;
+        }
+
+        .document-box p {
+            font-size: 9px;
+            color: #929dac;
+            margin-bottom: 12px;
+        }
+
+        .document-button {
+            display: inline-block;
+            border: 1px solid #1167d8;
+            color: #1167d8;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 10px;
+            cursor: pointer;
+            background: white;
+        }
+
+        .document-input {
+            display: none;
+        }
+
+        /* =========================
+           BOTTOM BUTTONS
+        ========================= */
+
+        .bottom-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid #e8edf2;
+        }
+
+        .cancel-btn {
+            border: none;
+            background: transparent;
+            color: #7a8797;
+            font-size: 11px;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        .next-btn {
+            border: none;
+            background: #1167d8;
+            color: white;
+            padding: 12px 21px;
+            border-radius: 7px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .next-btn:hover {
+            background: #0d57b9;
+        }
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        .mobile-menu {
+            display: none;
+        }
+
+        @media (max-width: 1050px) {
+
+            .sidebar {
+                width: 210px;
+            }
+
+            .main {
+                margin-left: 210px;
+                width: calc(100% - 210px);
+            }
+
+            .registration-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .side-card {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .fee-card {
+                margin: 20px;
+            }
+        }
+
+        @media (max-width: 760px) {
+
+            .sidebar {
+                display: none;
+            }
+
+            .main {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .topbar {
+                padding: 0 15px;
+            }
+
+            .search {
+                display: none;
+            }
+
+            .mobile-menu {
+                display: block;
+                font-size: 22px;
+                color: #172033;
+            }
+
+            .content {
+                padding: 18px 13px;
+            }
+
+            .page-title h1 {
+                font-size: 21px;
+            }
+
+            .steps {
+                overflow-x: auto;
+                padding: 14px;
+            }
+
+            .step {
+                min-width: 145px;
+            }
+
+            .step-line {
+                min-width: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full {
+                grid-column: auto;
+            }
+
+            .card {
+                padding: 17px;
+            }
+
+            .side-card {
+                display: block;
+            }
+
+            .profile span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <!-- =========================
+         SIDEBAR
+    ========================== -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">A</div>
+
+            <div class="brand-text">
+                <strong>AMBUYEE SCHOOL</strong>
+                <small>Student Portal</small>
+            </div>
+        </div>
+
+        <nav class="menu">
+
+            <div class="menu-title">Main Menu</div>
+
+            <a href="#">
+                <span class="menu-icon">⌂</span>
+                Dashboard
+            </a>
+
+            <a href="#" class="active">
+                <span class="menu-icon">▣</span>
+                Registration
+            </a>
+
+            <a href="#">
+                <span class="menu-icon">◉</span>
+                My Profile
+            </a>
+
+            <a href="#">
+                <span class="menu-icon">●</span>
+                Notifications
+            </a>
+
+            <a href="#">
+                <span class="menu-icon">✉</span>
+                Messages
+            </a>
+
+            <a href="#">
+                <span class="menu-icon">⚙</span>
+                Settings
+            </a>
+
+            <a href="#">
+                <span class="menu-icon">↪</span>
+                Logout
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- =========================
+         MAIN
+    ========================== -->
+
+    <main class="main">
+
+        <!-- TOP BAR -->
+
+        <header class="topbar">
+
+            <div class="mobile-menu">☰</div>
+
+            <div class="search">
+                🔍
+                <input
+                    type="text"
+                    placeholder="Search anything..."
+                >
+            </div>
+
+            <div class="top-right">
+
+                <div class="notification">
+                    🔔
+                    <span class="notification-dot"></span>
+                </div>
+
+                <div class="profile">
+
+                    <div class="profile-photo">
+                        S
+                    </div>
+
+                    <span>Student</span>
+
+                    <span>⌄</span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- CONTENT -->
+
+        <section class="content">
+
+            <div class="page-title">
+
+                <h1>Student Registration</h1>
+
+                <p>
+                    Fill in the form below to register as a student.
+                </p>
+
+            </div>
+
+
+            <!-- STEP BAR -->
+
+            <div class="steps">
+
+                <div class="step active">
+
+                    <div class="step-circle">
+                        1
+                    </div>
+
+                    <div class="step-text">
+                        <strong>Personal Info</strong>
+                        <span>Basic information</span>
+                    </div>
+
+                </div>
+
+                <div class="step-line"></div>
+
+                <div class="step">
+
+                    <div class="step-circle">
+                        2
+                    </div>
+
+                    <div class="step-text">
+                        <strong>Documents</strong>
+                        <span>Upload documents</span>
+                    </div>
+
+                </div>
+
+                <div class="step-line"></div>
+
+                <div class="step">
+
+                    <div class="step-circle">
+                        3
+                    </div>
+
+                    <div class="step-text">
+                        <strong>Review</strong>
+                        <span>Check information</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- REGISTRATION -->
+
+            <div class="registration-grid">
+
+
+                <!-- LEFT -->
+
+                <div>
+
+                    <div class="card">
+
+                        <div class="card-header">
+
+                            <div>
+                                <h2>Personal Information</h2>
+
+                                <p>
+                                    Enter the student's information carefully.
+                                </p>
+                            </div>
+
+                            <div class="required-note">
+                                * Required
+                            </div>
+
+                        </div>
+
+
+                        <form id="registrationForm">
+
+                            <div class="form-grid">
+
+
+                                <!-- FULL NAME -->
+
+                                <div class="form-group">
+
+                                    <label>
+                                        Full Name <span>*</span>
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="full_name"
+                                        placeholder="Enter full name"
+                                        required
+                                    >
+
+                                </div>
+
+
+                                <!-- NATIONAL ID -->
+
+                                <div class="form-group">
+
+                                    <label>
+                                        National ID <span>*</span>
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="national_id"
+                                        placeholder="Enter national ID"
+                                        required
+                                    >
+
+                                </div>
+
+
+                                <!-- GANDA -->
+
+                                <div class="form-group">
+
+                                    <label>
+                                        Ganda <span>*</span>
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="ganda"
+                                        placeholder="Enter ganda"
+                                        required
+                                    >
+
+                                </div>
+
+
+                                <!-- ACADEMIC YEAR -->
+
+                                <div class="form-group">
+
+                                    <label>
+                                        Academic Year <span>*</span>
+                                    </label>
+
+                                    <select
+                                        name="academic_year"
+                                        required
+                                    >
+
+                                        <option value="">
+                                            Select academic year
+                                        </option>
+
+                                        <option value="2026/2027">
+                                            2026/2027
+                                        </option>
+
+                                        <option value="2027/2028">
+                                            2027/2028
+                                        </option>
+
+                                        <option value="2028/2029">
+                                            2028/2029
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <!-- GRADE -->
+
+                                <div class="form-group">
+
+                                    <label>
+                                        Grade <span>*</span>
+                                    </label>
+
+                                    <select
+                                        name="grade"
+                                        required
+                                    >
+
+                                        <option value="">
+                                            Select grade
+                                        </option>
+
+                                        <option value="9">
+                                            Grade 9
+                                        </option>
+
+                                        <option value="10">
+                                            Grade 10
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <!-- SECTION -->
+
+                                <div class="form-group">
+
+                                    <label>
+                                        Section <span>*</span>
+                                    </label>
+
+                                    <div class="section-options">
+
+                                        <div class="section-option">
+                                            <input
+                                                type="radio"
+                                                id="sectionA"
+                                                name="section"
+                                                value="A"
+                                                required
+                                            >
+                                            <label for="sectionA">A</label>
+                                        </div>
+
+                                        <div class="section-option">
+                                            <input
+                                                type="radio"
+                                                id="sectionB"
+                                                name="section"
+                                                value="B"
+                                            >
+                                            <label for="sectionB">B</label>
+                                        </div>
+
+                                        <div class="section-option">
+                                            <input
+                                                type="radio"
+                                                id="sectionC"
+                                                name="section"
+                                                value="C"
+                                            >
+                                            <label for="sectionC">C</label>
+                                        </div>
+
+                                        <div class="section-option">
+                                            <input
+                                                type="radio"
+                                                id="sectionD"
+                                                name="section"
+                                                value="D"
+                                            >
+                                            <label for="sectionD">D</label>
+                                        </div>
+
+                                        <div class="section-option">
+                                            <input
+                                                type="radio"
+                                                id="sectionE"
+                                                name="section"
+                                                value="E"
+                                            >
+                                            <label for="sectionE">E</label>
+                                        </div>
+
+                                        <div class="section-option">
+                                            <input
+                                                type="radio"
+                                                id="sectionF"
+                                                name="section"
+                                                value="F"
+                                            >
+                                            <label for="sectionF">F</label>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- STREAM -->
+
+                                <div class="form-group full">
+
+                                    <label>
+                                        Stream
+                                    </label>
+
+                                    <div class="stream-options">
+
+                                        <button
+                                            type="button"
+                                            class="stream-btn active"
+                                            onclick="selectStream(this, 'Natural')"
+                                        >
+                                            Natural
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="stream-btn"
+                                            onclick="selectStream(this, 'Social')"
+                                        >
+                                            Social
+                                        </button>
+
+                                    </div>
+
+                                    <input
+                                        type="hidden"
+                                        name="stream"
+                                        id="streamInput"
+                                        value="Natural"
+                                    >
+
+                                </div>
+
+
+                                <!-- PHONE -->
+
+                                <div class="form-group">
+
+                                    <label>
+                                        Phone Number
+                                    </label>
+
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        placeholder="Enter phone number"
+                                    >
+
+                                </div>
+
+
+                                <!-- GENDER -->
+
+                                <div class="form-group">
+
+                                    <label>
+                                        Gender
+                                    </label>
+
+                                    <select name="gender">
+
+                                        <option value="">
+                                            Select gender
+                                        </option>
+
+                                        <option value="Male">
+                                            Male
+                                        </option>
+
+                                        <option value="Female">
+                                            Female
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <!-- AGE -->
+
+                                <div class="form-group">
+
+                                    <label>
+                                        Age
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        name="age"
+                                        min="10"
+                                        max="30"
+                                        placeholder="Enter age"
+                                    >
+
+                                </div>
+
+
+                                <!-- CITY -->
+
+                                <div class="form-group">
+
+                                    <label>
+                                        City
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="city"
+                                        placeholder="Enter city"
+                                    >
+
+                                </div>
+
+
+                            </div>
+
+
+                            <!-- ACTIONS -->
+
+                            <div class="bottom-actions">
+
+                                <button
+                                    type="button"
+                                    class="cancel-btn"
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="next-btn"
+                                >
+                                    Next: Upload Documents
+                                    <span>→</span>
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+
+                    <!-- DOCUMENTS -->
+
+                    <div class="card documents-card">
+
+                        <div class="card-header">
+
+                            <div>
+                                <h2>Documents</h2>
+
+                                <p>
+                                    Upload the required student documents.
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <div class="document-box">
+
+                            <div class="document-box-icon">
+                                📄
+                            </div>
+
+                            <strong>
+                                Upload Student Documents
+                            </strong>
+
+                            <p>
+                                PDF, JPG or PNG files are supported.
+                            </p>
+
+                            <label
+                                for="documents"
+                                class="document-button"
+                            >
+                                Choose Documents
+                            </label>
+
+                            <input
+                                id="documents"
+                                class="document-input"
+                                type="file"
+                                multiple
+                                accept=".pdf,.jpg,.jpeg,.png"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- RIGHT -->
+
+                <aside class="side-card">
+
+
+                    <!-- PHOTO -->
+
+                    <div class="student-photo-area">
+
+                        <div class="photo-preview" id="photoPreview">
+
+                            <div class="photo-preview-icon">
+                                👤
+                            </div>
+
+                            <span>
+                                Student Photo
+                            </span>
+
+                        </div>
+
+                        <label
+                            for="studentPhoto"
+                            class="upload-photo"
+                        >
+                            Upload Student Photo
+                        </label>
+
+                        <input
+                            id="studentPhoto"
+                            class="photo-input"
+                            type="file"
+                            accept="image/*"
+                        >
+
+                        <div class="school-name">
+                            AMBUYEE SCHOOL
+                        </div>
+
+                    </div>
+
+
+                    <!-- FEE -->
+
+                    <div class="fee-card">
+
+                        <div class="fee-title">
+                            Registration Fee
+                        </div>
+
+                        <div>
+                            <span class="fee-amount">
+                                500
+                            </span>
+
+                            <span class="fee-currency">
+                                ETB
+                            </span>
+                        </div>
+
+                        <div class="fee-status">
+                            Payment status: Pending
+                        </div>
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script>
+
+    /* =========================
+       STREAM SELECTOR
+    ========================== */
+
+    function selectStream(button, stream) {
+
+        document
+            .querySelectorAll(".stream-btn")
+            .forEach(function(btn) {
+
+                btn.classList.remove("active");
+
+            });
+
+        button.classList.add("active");
+
+        document.getElementById("streamInput").value = stream;
+    }
+
+
+    /* =========================
+       PHOTO PREVIEW
+    ========================== */
+
+    document
+        .getElementById("studentPhoto")
+        .addEventListener("change", function(event) {
+
+            const file = event.target.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+
+                document.getElementById("photoPreview").innerHTML = `
+                    <img
+                        src="${e.target.result}"
+                        alt="Student Photo"
+                        style="
+                            width:100%;
+                            height:100%;
+                            object-fit:cover;
+                        "
+                    >
+                `;
+
+            };
+
+            reader.readAsDataURL(file);
+
+        });
+
+
+    /* =========================
+       DOCUMENT DISPLAY
+    ========================== */
+
+    document
+        .getElementById("documents")
+        .addEventListener("change", function() {
+
+            const files = this.files;
+
+            if (files.length === 0) {
+                return;
+            }
+
+            const box = document.querySelector(".document-box");
+
+            box.querySelector("strong").textContent =
+                files.length + " document(s) selected";
+
+            box.querySelector("p").textContent =
+                "Documents are ready for upload.";
+
+        });
+
+
+    /* =========================
+       FORM TEST
+    ========================== */
+
+    document
+        .getElementById("registrationForm")
+        .addEventListener("submit", function(event) {
+
+            event.preventDefault();
+
+            alert(
+                "Registration form is ready. Database connection will be added next."
+            );
+
+        });
+
+</script>
+
+</body>
+</html>

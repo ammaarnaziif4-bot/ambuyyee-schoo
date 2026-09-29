@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restore Data | Director</title>
+<style>
+body{margin:0;font-family:Arial;background:#f4f7fb;color:#10243d}.header{background:#071d38;color:white;padding:22px}.header a{color:#cfa23b;text-decoration:none}.container{max-width:850px;margin:25px auto;padding:0 15px}.card{background:white;border-radius:15px;padding:20px;margin-bottom:15px;box-shadow:0 5px 20px #071d3810}button{padding:12px 18px;background:#071d38;color:white;border:0;border-radius:8px;font-weight:bold;margin:5px}select{padding:11px;border:1px solid #ddd;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="header"><a href="/director/dashboard">← Dashboard</a><h1>Restore Data</h1></div>
+<div class="container">
+
+<div class="card">
+<h2>Database Backup</h2>
+<p>Create a complete backup of the school database.</p>
+<form method="POST">
+<input type="hidden" name="action" value="backup">
+<button type="submit">CREATE BACKUP</button>
+</form>
+</div>
+
+<div class="card">
+<h2>Available Backups</h2>
+
+{% for backup in backups %}
+<form method="POST" style="margin-bottom:10px">
+<input type="hidden" name="action" value="restore">
+<input type="hidden" name="filename" value="{{ backup['filename'] }}">
+<strong>{{ backup["filename"] }}</strong>
+<button type="submit" onclick="return confirm('Restore this backup? Current data may be replaced.')">RESTORE</button>
+</form>
+{% else %}
+<p>No backups created yet.</p>
+{% endfor %}
+
+</div>
+</div>
+</body>
+</html>

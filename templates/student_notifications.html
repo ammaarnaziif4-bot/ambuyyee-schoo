@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications | Ambuyyee School</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #10243e;
+        }
+
+        .topbar {
+            min-height: 76px;
+            padding: 0 7%;
+            background: #10243e;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .brand-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: white;
+            color: #b58a45;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 19px;
+        }
+
+        .brand strong {
+            font-size: 15px;
+            letter-spacing: 2px;
+        }
+
+        .back {
+            color: white;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,.3);
+            padding: 10px 16px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .back:hover {
+            background: #b58a45;
+            border-color: #b58a45;
+        }
+
+        .container {
+            width: min(850px, 90%);
+            margin: 45px auto;
+        }
+
+        .heading {
+            margin-bottom: 25px;
+        }
+
+        .heading span {
+            color: #b58a45;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        .heading h1 {
+            margin: 8px 0;
+            font-size: 34px;
+        }
+
+        .notification {
+            background: white;
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 15px;
+            border-left: 4px solid #b58a45;
+            box-shadow: 0 8px 25px rgba(16,36,62,.07);
+        }
+
+        .notification.unread {
+            background: #fffdf8;
+        }
+
+        .message {
+            font-size: 15px;
+            line-height: 1.7;
+            margin: 0 0 10px;
+        }
+
+        .date {
+            color: #718096;
+            font-size: 12px;
+        }
+
+        .empty {
+            background: white;
+            padding: 45px 25px;
+            text-align: center;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(16,36,62,.07);
+            color: #718096;
+        }
+
+        .empty-icon {
+            font-size: 38px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <div class="brand">
+        <div class="brand-logo">A</div>
+        <strong>AMBUYEE SCHOOL</strong>
+    </div>
+
+    <a href="/student/dashboard" class="back">← Dashboard</a>
+</header>
+
+<main class="container">
+
+    <div class="heading">
+        <span>STUDENT CENTER</span>
+        <h1>Notifications</h1>
+    </div>
+
+    {% if notifications %}
+
+        {% for notification in notifications %}
+            <div class="notification {% if notification['is_read'] == 0 %}unread{% endif %}">
+                <p class="message">
+                    {{ notification['message'] }}
+                </p>
+
+                <div class="date">
+                    {{ notification['created_at'] }}
+                </div>
+            </div>
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty">
+            <div class="empty-icon">🔔</div>
+            <h3>No notifications yet</h3>
+            <p>You will see messages from your teacher here.</p>
+        </div>
+
+    {% endif %}
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Registration Monitoring | AMBUYEE SCHOOL</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f4f7fb;
+    color:#12263f;
+}
+
+.layout{
+    min-height:100vh;
+    display:flex;
+}
+
+.sidebar{
+    width:250px;
+    background:#071d38;
+    color:white;
+    padding:24px 16px;
+    position:fixed;
+    inset:0 auto 0 0;
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    margin-bottom:38px;
+}
+
+.logo{
+    width:46px;
+    height:46px;
+    border-radius:13px;
+    background:#cfa23b;
+    color:#071d38;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+}
+
+.brand h2{
+    margin:0;
+    font-size:17px;
+}
+
+.brand span{
+    font-size:10px;
+    color:#cfa23b;
+    letter-spacing:2px;
+}
+
+.side-title{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color:#7388a1;
+    margin:0 12px 10px;
+}
+
+.side-link{
+    display:block;
+    color:#b9c6d8;
+    text-decoration:none;
+    padding:12px 13px;
+    border-radius:10px;
+    margin-bottom:6px;
+    font-size:13px;
+}
+
+.side-link.active,
+.side-link:hover{
+    background:#173a60;
+    color:#fff;
+}
+
+.main{
+    margin-left:250px;
+    flex:1;
+    padding:28px 32px;
+}
+
+.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:20px;
+    margin-bottom:25px;
+}
+
+.eyebrow{
+    color:#c08e1c;
+    text-transform:uppercase;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:1.4px;
+}
+
+h1{
+    margin:6px 0 5px;
+    font-size:30px;
+    color:#071d38;
+}
+
+.subtitle{
+    margin:0;
+    color:#718096;
+    font-size:14px;
+}
+
+.officers{
+    display:flex;
+    gap:9px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+}
+
+.officer{
+    background:#fff;
+    border:1px solid #e5ebf2;
+    border-radius:12px;
+    padding:10px 13px;
+    font-size:11px;
+    color:#43556b;
+    box-shadow:0 4px 18px rgba(7,29,56,.05);
+}
+
+.officer strong{
+    display:block;
+    color:#10243d;
+    font-size:12px;
+    margin-bottom:3px;
+}
+
+.toolbar{
+    background:#fff;
+    border:1px solid #e5ebf2;
+    border-radius:16px;
+    padding:14px 16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    margin-bottom:20px;
+    box-shadow:0 5px 20px rgba(7,29,56,.05);
+}
+
+.toolbar form{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.toolbar label{
+    font-size:12px;
+    font-weight:800;
+    color:#56677c;
+}
+
+.toolbar select{
+    border:1px solid #d8e0e9;
+    background:#fff;
+    border-radius:9px;
+    padding:10px 12px;
+    color:#10243d;
+    min-width:160px;
+}
+
+.toolbar-note{
+    font-size:12px;
+    color:#7a899b;
+}
+
+.kpis{
+    display:grid;
+    grid-template-columns:1.35fr repeat(3,1fr);
+    gap:16px;
+    margin-bottom:20px;
+}
+
+.kpi{
+    background:#fff;
+    border:1px solid #e6ebf1;
+    border-radius:17px;
+    padding:20px;
+    box-shadow:0 7px 24px rgba(7,29,56,.06);
+}
+
+.main-kpi{
+    background:linear-gradient(135deg,#071d38,#123b63);
+    color:#fff;
+    position:relative;
+    overflow:hidden;
+}
+
+.kpi-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:#8190a2;
+    font-weight:800;
+}
+
+.main-kpi .kpi-label{
+    color:#b9c8d8;
+}
+
+.kpi-number{
+    font-size:34px;
+    font-weight:900;
+    margin:9px 0 3px;
+    color:#071d38;
+}
+
+.main-kpi .kpi-number{
+    color:#fff;
+}
+
+.kpi small{
+    font-size:11px;
+    color:#8795a5;
+}
+
+.main-kpi small{
+    color:#bdc9d5;
+}
+
+.progress{
+    height:9px;
+    background:#e8edf3;
+    border-radius:99px;
+    overflow:hidden;
+    margin-top:13px;
+}
+
+.main-kpi .progress{
+    background:rgba(255,255,255,.16);
+}
+
+.progress span{
+    display:block;
+    height:100%;
+    background:#cfa23b;
+    border-radius:99px;
+}
+
+.status-dot{
+    display:inline-block;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#2e9d63;
+    margin-right:6px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1.5fr 1fr;
+    gap:20px;
+    margin-bottom:20px;
+}
+
+.panel{
+    background:#fff;
+    border:1px solid #e6ebf1;
+    border-radius:17px;
+    padding:21px;
+    box-shadow:0 7px 24px rgba(7,29,56,.05);
+}
+
+.panel-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:17px;
+}
+
+.panel h2{
+    font-size:17px;
+    margin:0;
+    color:#10243d;
+}
+
+.panel-head p{
+    margin:5px 0 0;
+    font-size:11px;
+    color:#8290a0;
+}
+
+.grade-row{
+    margin-bottom:17px;
+}
+
+.grade-top{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    font-size:12px;
+    margin-bottom:7px;
+}
+
+.grade-name{
+    font-weight:800;
+    color:#203650;
+}
+
+.grade-value{
+    color:#6e7d8f;
+}
+
+.grade-bar{
+    height:11px;
+    background:#edf1f5;
+    border-radius:99px;
+    overflow:hidden;
+}
+
+.grade-bar span{
+    display:block;
+    height:100%;
+    background:linear-gradient(90deg,#173a60,#cfa23b);
+    border-radius:99px;
+}
+
+.grade-meta{
+    display:flex;
+    gap:12px;
+    margin-top:7px;
+    font-size:10px;
+    color:#8592a1;
+}
+
+.grade-meta strong{
+    color:#263c55;
+}
+
+.failed-list{
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+    max-height:280px;
+    overflow:auto;
+}
+
+.failed-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#fff5f4;
+    border:1px solid #f1d9d6;
+    border-radius:10px;
+    padding:11px 12px;
+}
+
+.failed-class{
+    font-size:12px;
+    font-weight:800;
+    color:#7c2d28;
+}
+
+.failed-count{
+    font-size:12px;
+    font-weight:900;
+    color:#b64239;
+}
+
+.empty{
+    font-size:12px;
+    color:#8a96a4;
+    padding:20px 5px;
+    text-align:center;
+}
+
+.table-wrap{
+    overflow:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:520px;
+}
+
+th,td{
+    text-align:left;
+    padding:12px 10px;
+    border-bottom:1px solid #edf0f4;
+    font-size:12px;
+}
+
+th{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.7px;
+    color:#8390a0;
+}
+
+td{
+    color:#30455e;
+}
+
+.badge{
+    display:inline-block;
+    padding:5px 8px;
+    border-radius:99px;
+    background:#e8f7ef;
+    color:#167043;
+    font-weight:800;
+    font-size:10px;
+}
+
+.footer-note{
+    text-align:center;
+    color:#8b98a7;
+    font-size:11px;
+    padding:10px 0 25px;
+}
+
+@media(max-width:1050px){
+    .kpis{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .top{
+        flex-direction:column;
+    }
+
+    .officers{
+        justify-content:flex-start;
+    }
+}
+
+@media(max-width:800px){
+    .layout{
+        display:block;
+    }
+
+    .sidebar{
+        position:static;
+        width:100%;
+        padding:16px;
+    }
+
+    .main{
+        margin-left:0;
+        padding:18px 12px;
+    }
+
+    .kpis{
+        grid-template-columns:1fr;
+    }
+
+    .toolbar{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .toolbar form{
+        width:100%;
+        flex-wrap:wrap;
+    }
+
+    .toolbar select{
+        flex:1;
+    }
+
+    h1{
+        font-size:24px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="layout">
+
+<aside class="sidebar">
+
+    <div class="brand">
+        <div class="logo">AS</div>
+
+        <div>
+            <h2>AMBUYEE</h2>
+            <span>SCHOOL</span>
+        </div>
+    </div>
+
+    <div class="side-title">Monitoring</div>
+
+    <a class="side-link active" href="/monitoring/dashboard">
+        ▣ Registration Overview
+    </a>
+
+    <a class="side-link" href="/director/login">
+        Director Access
+    </a>
+
+    <a class="side-link" href="/teacher/login">
+        Teacher Access
+    </a>
+
+</aside>
+
+
+<main class="main">
+
+<header class="top">
+
+    <div>
+        <div class="eyebrow">AMBUYEE SCHOOL</div>
+
+        <h1>
+            Student Registration Monitoring Dashboard
+        </h1>
+
+        <p class="subtitle">
+            Approved student registration progress for authorized education monitoring.
+        </p>
+    </div>
+
+
+    <div class="officers">
+
+        <div class="officer">
+            <strong>Nuunnuu Ibrahim</strong>
+            Social Affairs Officer
+        </div>
+
+        <div class="officer">
+            <strong>Haafiz</strong>
+            Head of the Limmuu Kossa Woreda Education Office
+        </div>
+
+    </div>
+
+</header>
+
+
+<section class="toolbar">
+
+    <form method="GET" action="/monitoring/dashboard">
+
+        <label for="year_id">
+            Academic Year
+        </label>
+
+        <select
+            id="year_id"
+            name="year_id"
+            onchange="this.form.submit()"
+        >
+
+            {% for year in years %}
+
+            <option
+                value="{{ year['id'] }}"
+                {% if selected_year and year['id'] == selected_year['id'] %}
+                selected
+                {% endif %}
+            >
+                {{ year['year_name'] }}
+                {% if year['is_active'] %} — Active{% endif %}
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </form>
+
+
+    <div class="toolbar-note">
+        Registration progress counts
+        <strong>teacher-approved students only.</strong>
+    </div>
+
+</section>
+
+
+<section class="kpis">
+
+    <div class="kpi main-kpi">
+
+        <div class="kpi-label">
+            Overall Registration Progress
+        </div>
+
+        <div class="kpi-number">
+            {{ overall_percentage }}%
+        </div>
+
+        <small>
+            {{ total_passed }}
+            approved of
+            {{ targets['total_students'] if targets else 0 }}
+            target students
+        </small>
+
+        <div class="progress">
+            <span
+                style="width:{{ 100 if overall_percentage > 100 else overall_percentage }}%"
+            ></span>
+        </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+        <div class="kpi-label">
+            Approved
+        </div>
+
+        <div class="kpi-number">
+            {{ total_passed }}
+        </div>
+
+        <small>
+            <span class="status-dot"></span>
+            Counted in progress
+        </small>
+
+    </div>
+
+
+    <div class="kpi">
+
+        <div class="kpi-label">
+            Pending Review
+        </div>
+
+        <div class="kpi-number">
+            {{ total_pending }}
+        </div>
+
+        <small>
+            Not counted yet
+        </small>
+
+    </div>
+
+
+    <div class="kpi">
+
+        <div class="kpi-label">
+            Failed
+        </div>
+
+        <div class="kpi-number">
+            {{ total_failed }}
+        </div>
+
+        <small>
+            Shown separately below
+        </small>
+
+    </div>
+
+</section>
+
+
+<section class="grid">
+
+
+<div class="panel">
+
+    <div class="panel-head">
+
+        <div>
+
+            <h2>
+                Registration Progress by Grade
+            </h2>
+
+            <p>
+                Approved students compared with Director-set targets.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    {% for item in grade_stats %}
+
+    <div class="grade-row">
+
+        <div class="grade-top">
+
+            <div class="grade-name">
+                Grade {{ item['grade'] }}
+            </div>
+
+            <div class="grade-value">
+                {{ item['percentage'] }}%
+            </div>
+
+        </div>
+
+
+        <div class="grade-bar">
+
+            <span
+                style="width:{{ 100 if item['percentage'] > 100 else item['percentage'] }}%"
+            ></span>
+
+        </div>
+
+
+        <div class="grade-meta">
+
+            <span>
+                Approved <strong>{{ item['passed'] }}</strong>
+            </span>
+
+            <span>
+                Target <strong>{{ item['target'] }}</strong>
+            </span>
+
+            <span>
+                Pending <strong>{{ item['pending'] }}</strong>
+            </span>
+
+            <span>
+                Failed <strong>{{ item['failed'] }}</strong>
+            </span>
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+
+<div class="panel">
+
+    <div class="panel-head">
+
+        <div>
+
+            <h2>
+                Failed by Class
+            </h2>
+
+            <p>
+                Separate view for students not approved.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="failed-list">
+
+        {% if failed_by_class %}
+
+            {% for item in failed_by_class %}
+
+            <div class="failed-item">
+
+                <div class="failed-class">
+                    {{ item['class_name'] }}
+                </div>
+
+                <div class="failed-count">
+                    {{ item['failed_count'] }} failed
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="empty">
+                No failed students for this academic year.
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+</section>
+
+
+<section class="panel">
+
+    <div class="panel-head">
+
+        <div>
+
+            <h2>
+                Recently Approved Students
+            </h2>
+
+            <p>
+                Latest teacher-approved applications.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    {% if recent_passed %}
+
+    <div class="table-wrap">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Approved At</th>
+                    <th>Status</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+            {% for student in recent_passed %}
+
+                <tr>
+
+                    <td>
+                        {{ student['full_name'] }}
+                    </td>
+
+                    <td>
+                        {{ student['class_name'] }}
+                    </td>
+
+                    <td>
+                        {{ student['reviewed_at'] or '—' }}
+                    </td>
+
+                    <td>
+                        <span class="badge">
+                            APPROVED
+                        </span>
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+        <div class="empty">
+            No approved students yet for this academic year.
+        </div>
+
+    {% endif %}
+
+</section>
+
+
+<div class="footer-note">
+    AMBUYEE SCHOOL • Student Registration Monitoring • Read-only monitoring view
+</div>
+
+</main>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Details | AMBUYEE SCHOOL</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/teacher_dashboard.css') }}">
+
+    <style>
+
+        .details-page {
+            max-width: 1050px;
+            margin: 0 auto;
+        }
+
+        .details-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .back-button {
+            text-decoration: none;
+            color: #071b3a;
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        .student-profile-card,
+        .details-section {
+            background: #ffffff;
+            border: 1px solid #e5eaf2;
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(7,27,58,.06);
+            margin-bottom: 20px;
+        }
+
+        .profile-top {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .profile-avatar {
+            width: 68px;
+            height: 68px;
+            border-radius: 20px;
+            background: #eef3fb;
+            color: #071b3a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 27px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .profile-name {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .profile-name h2 {
+            margin: 0;
+            color: #071b3a;
+            font-size: 24px;
+            overflow-wrap: anywhere;
+        }
+
+        .profile-name p {
+            margin: 5px 0 0;
+            color: #8b95a5;
+            font-size: 13px;
+        }
+
+        .status-large {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: #fff7df;
+            color: #98711e;
+            font-weight: 800;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .details-section h3 {
+            margin: 0 0 18px;
+            color: #071b3a;
+            font-size: 17px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px;
+            background: #edf0f5;
+            border: 1px solid #edf0f5;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .detail-item {
+            background: #ffffff;
+            padding: 15px;
+        }
+
+        .detail-item span {
+            display: block;
+            color: #929baa;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 6px;
+        }
+
+        .detail-item strong {
+            display: block;
+            color: #1a2d48;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        /* DOCUMENTS */
+
+        .document-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .document-card {
+            border: 1px solid #e5eaf2;
+            border-radius: 17px;
+            overflow: hidden;
+            background: #fafbfd;
+        }
+
+        .document-title {
+            padding: 13px 15px;
+            background: #071b3a;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .document-preview {
+            height: 230px;
+            background: #f1f4f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .document-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .document-empty {
+            color: #929baa;
+            font-size: 12px;
+        }
+
+        .document-footer {
+            padding: 12px 15px;
+            background: #ffffff;
+        }
+
+        .document-footer span {
+            display: block;
+            color: #8b95a5;
+            font-size: 10px;
+            margin-bottom: 4px;
+        }
+
+        .document-footer strong {
+            color: #1a2d48;
+            font-size: 11px;
+            overflow-wrap: anywhere;
+        }
+
+        .document-open {
+            display: inline-block;
+            margin-top: 8px;
+            text-decoration: none;
+            color: #9b6f20;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        /* PAYMENT */
+
+        .payment-reference {
+            margin-top: 16px;
+            padding: 15px;
+            border: 1px solid #ead9ad;
+            background: #fffaf0;
+            border-radius: 14px;
+        }
+
+        .payment-reference span {
+            display: block;
+            color: #8b95a5;
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+
+        .payment-reference strong {
+            color: #9b6f20;
+            font-size: 14px;
+        }
+
+        @media (max-width: 700px) {
+
+            .details-page {
+                width: 100%;
+            }
+
+            .student-profile-card,
+            .details-section {
+                padding: 17px;
+                border-radius: 18px;
+            }
+
+            .profile-top {
+                align-items: flex-start;
+            }
+
+            .profile-avatar {
+                width: 54px;
+                height: 54px;
+                border-radius: 15px;
+                font-size: 21px;
+            }
+
+            .profile-name h2 {
+                font-size: 19px;
+            }
+
+            .status-large {
+                padding: 7px 9px;
+                font-size: 9px;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .document-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .document-preview {
+                height: 250px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+
+<section class="review-card">
+    <div class="review-card-header">
+        <div>
+            <span class="review-label">APPLICATION REVIEW</span>
+            <h2>Teacher Decision</h2>
+            <p>Review this student's application and send a message.</p>
+        </div>
+    </div>
+
+    <form method="POST"
+          action="{{ url_for('teacher_review_student', student_id=student['id']) }}">
+
+        <div class="review-status">
+            <label>Select Result</label>
+
+            <div class="review-options">
+                <label class="review-option pass-option">
+                    <input type="radio"
+                           name="registration_status"
+                           value="passed"
+                           required>
+                    <span>✓ PASS</span>
+                </label>
+
+                <label class="review-option fail-option">
+                    <input type="radio"
+                           name="registration_status"
+                           value="failed"
+                           required>
+                    <span>✕ FAIL</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="message-field">
+            <label for="teacher_message">Message to Student</label>
+
+            <textarea
+                id="teacher_message"
+                name="teacher_message"
+                rows="5"
+                placeholder="Write a message for the student..."></textarea>
+        </div>
+
+        <button type="submit" class="review-submit-btn">
+            SAVE REVIEW
+        </button>
+
+    </form>
+</section>
+
+<div class="details-page">
+
+    <div class="details-header">
+
+        <a class="back-button"
+           href="{{ url_for('teacher_students') }}">
+            ← Back to Students
+        </a>
+
+    </div>
+
+
+    <!-- STUDENT PROFILE -->
+
+    <div class="student-profile-card">
+
+        <div class="profile-top">
+
+            <div class="profile-avatar">
+                {{ student["full_name"][0] }}
+            </div>
+
+            <div class="profile-name">
+
+                <h2>
+                    {{ student["full_name"] }}
+                </h2>
+
+                <p>
+                    Student ID #{{ student["id"] }}
+                </p>
+
+            </div>
+
+            <span class="status-large">
+                {{ student["registration_status"] }}
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- PERSONAL INFORMATION -->
+
+    <div class="details-section">
+
+        <h3>Personal Information</h3>
+
+        <div class="details-grid">
+
+            <div class="detail-item">
+                <span>Full Name</span>
+                <strong>{{ student["full_name"] }}</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Sex</span>
+                <strong>{{ student["sex"] }}</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Age</span>
+                <strong>{{ student["age"] }}</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Birth Date</span>
+                <strong>{{ student["birth_date"] }}</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>National ID</span>
+                <strong>{{ student["national_id"] }}</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Ganda</span>
+                <strong>{{ student["ganda"] or "-" }}</strong>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SCHOOL INFORMATION -->
+
+    <div class="details-section">
+
+        <h3>School Information</h3>
+
+        <div class="details-grid">
+
+            <div class="detail-item">
+                <span>Grade / Class</span>
+                <strong>{{ student["class_name"] }}</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Stream</span>
+                <strong>{{ student["stream"] or "-" }}</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Registration Status</span>
+                <strong>{{ student["registration_status"] }}</strong>
+            </div>
+
+            <div class="detail-item">
+                <span>Payment Status</span>
+                <strong>{{ student["payment_status"] or "-" }}</strong>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- DOCUMENTS -->
+
+    <div class="details-section">
+
+        <h3>Submitted Documents</h3>
+
+        <div class="document-grid">
+
+
+            <!-- STUDENT PHOTO -->
+
+            <div class="document-card">
+
+                <div class="document-title">
+                    Student Photo
+                </div>
+
+                <div class="document-preview">
+
+                    {% if student["student_photo"] %}
+
+                    <img
+                        src="{{ url_for('static',
+                        filename='uploads/' + student['student_photo']) }}"
+                        alt="Student Photo">
+
+                    {% else %}
+
+                    <span class="document-empty">
+                        No photo uploaded
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+                {% if student["student_photo"] %}
+
+                <div class="document-footer">
+
+                    <span>File</span>
+
+                    <strong>
+                        {{ student["student_photo"] }}
+                    </strong>
+
+                    <a
+                        class="document-open"
+                        target="_blank"
+                        href="{{ url_for('static',
+                        filename='uploads/' + student['student_photo']) }}">
+                        Open Full Image →
+                    </a>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- ID FRONT -->
+
+            <div class="document-card">
+
+                <div class="document-title">
+                    ID Card Front
+                </div>
+
+                <div class="document-preview">
+
+                    {% if student["id_front"] %}
+
+                    <img
+                        src="{{ url_for('static',
+                        filename='uploads/' + student['id_front']) }}"
+                        alt="ID Card Front">
+
+                    {% else %}
+
+                    <span class="document-empty">
+                        No document uploaded
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+                {% if student["id_front"] %}
+
+                <div class="document-footer">
+
+                    <span>File</span>
+
+                    <strong>
+                        {{ student["id_front"] }}
+                    </strong>
+
+                    <a
+                        class="document-open"
+                        target="_blank"
+                        href="{{ url_for('static',
+                        filename='uploads/' + student['id_front']) }}">
+                        Open Full Image →
+                    </a>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- ID BACK -->
+
+            <div class="document-card">
+
+                <div class="document-title">
+                    ID Card Back
+                </div>
+
+                <div class="document-preview">
+
+                    {% if student["id_back"] %}
+
+                    <img
+                        src="{{ url_for('static',
+                        filename='uploads/' + student['id_back']) }}"
+                        alt="ID Card Back">
+
+                    {% else %}
+
+                    <span class="document-empty">
+                        No document uploaded
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+                {% if student["id_back"] %}
+
+                <div class="document-footer">
+
+                    <span>File</span>
+
+                    <strong>
+                        {{ student["id_back"] }}
+                    </strong>
+
+                    <a
+                        class="document-open"
+                        target="_blank"
+                        href="{{ url_for('static',
+                        filename='uploads/' + student['id_back']) }}">
+                        Open Full Image →
+                    </a>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- PAYMENT RECEIPT -->
+
+            <div class="document-card">
+
+                <div class="document-title">
+                    Payment Receipt
+                </div>
+
+                <div class="document-preview">
+
+                    {% if student["payment_receipt"] %}
+
+                    {% if student["payment_receipt"].lower().endswith(
+                        ('.jpg', '.jpeg', '.png', '.webp')
+                    ) %}
+
+                    <img
+                        src="{{ url_for('static',
+                        filename='uploads/' + student['payment_receipt']) }}"
+                        alt="Payment Receipt">
+
+                    {% else %}
+
+                    <span class="document-empty">
+                        PDF Receipt
+                    </span>
+
+                    {% endif %}
+
+                    {% else %}
+
+                    <span class="document-empty">
+                        No receipt uploaded
+                    </span>
+
+                    {% endif %}
+
+                </div>
+
+                {% if student["payment_receipt"] %}
+
+                <div class="document-footer">
+
+                    <span>Payment Reference</span>
+
+                    <strong>
+                        {{ student["payment_reference"] or "-" }}
+                    </strong>
+
+                    <a
+                        class="document-open"
+                        target="_blank"
+                        href="{{ url_for('static',
+                        filename='uploads/' + student['payment_receipt']) }}">
+                        Open Receipt →
+                    </a>
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

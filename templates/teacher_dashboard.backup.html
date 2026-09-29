@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Teacher Dashboard | AMBUYEE SCHOOL</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/teacher_dashboard.css') }}">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">AS</div>
+
+            <div>
+                <h2>AMBUYEE</h2>
+                <span>SCHOOL</span>
+            </div>
+        </div>
+
+        <nav class="menu">
+
+            <a href="/" class="menu-item active">
+                <span>▣</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="{{ url_for('teacher_students') }}" class="menu-item">
+                <span>♙</span>
+                <span>Students</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span>✓</span>
+                <span>Applications</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span>✉</span>
+                <span>Messages</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span>⚙</span>
+                <span>Settings</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <a href="{{ url_for('teacher_logout') }}"
+               class="logout">
+                <span>↪</span>
+                <span>Logout</span>
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+
+            <div class="mobile-brand">
+                <div class="brand-logo">AS</div>
+                <strong>AMBUYEE SCHOOL</strong>
+            </div>
+
+            <div class="topbar-right">
+
+                <button class="notification">
+                    🔔
+                    <span class="notification-dot"></span>
+                </button>
+
+                <div class="teacher-profile">
+
+                    <div class="teacher-avatar">
+                        T
+                    </div>
+
+                    <div class="teacher-info">
+                        <strong>
+                            {{ session.get("teacher_name", "Teacher") }}
+                        </strong>
+                        <span>Teacher</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- PAGE -->
+        <section class="page-content">
+
+            <div class="welcome-section">
+
+                <div>
+                    <p class="small-title">TEACHER PORTAL</p>
+
+                    <h1>
+                        Welcome back,
+                        {{ session.get("teacher_name", "Teacher") }}
+                    </h1>
+
+                    <p class="welcome-text">
+                        Manage student registrations and applications
+                        from your dashboard.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- STATISTICS -->
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon blue">
+                        ♙
+                    </div>
+
+                    <div>
+                        <span>Total Students</span>
+                        <strong>{{ total_students }}</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon gold">
+                        ◷
+                    </div>
+
+                    <div>
+
+    <span>Pending Applications</span>
+    <strong>{{ pending_students }}</strong>
+
+</div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon green">
+                        ✓
+                    </div>
+
+                    <div>
+                        <span>Passed Students</span>
+                        <strong>{{ passed_students }}</strong>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon red">
+                        !
+                    </div>
+
+                    <div>
+                        <span>Failed Students</span>
+                        <strong>{{ failed_students }}</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- QUICK ACTIONS -->
+            <div class="section-heading">
+
+                <div>
+                    <h2>Quick Actions</h2>
+                    <p>Common teacher tasks</p>
+                </div>
+
+            </div>
+
+
+            <div class="quick-grid">
+
+                <a href="{{ url_for('teacher_students') }}" class="quick-card">
+
+                    <div class="quick-icon">
+                        ♙
+                    </div>
+
+                    <div>
+                        <h3>View Students</h3>
+                        <p>Browse registered students</p>
+                    </div>
+
+                    <span class="arrow">→</span>
+
+                </a>
+
+
+                <a href="#" class="quick-card">
+
+                    <div class="quick-icon">
+                        ◷
+                    </div>
+
+                    <div>
+                        <h3>Review Applications</h3>
+                        <p>Check pending registrations</p>
+                    </div>
+
+                    <span class="arrow">→</span>
+
+                </a>
+
+
+                <a href="#" class="quick-card">
+
+                    <div class="quick-icon">
+                        ✉
+                    </div>
+
+                    <div>
+                        <h3>Messages</h3>
+                        <p>Communicate with students</p>
+                    </div>
+
+                    <span class="arrow">→</span>
+
+                </a>
+
+            </div>
+
+
+            <!-- RECENT APPLICATIONS -->
+            <div class="section-heading recent-heading">
+
+                <div>
+                    <h2>Recent Applications</h2>
+                    <p>Latest student registrations</p>
+                </div>
+
+                <a href="#" class="view-all">
+                    View All →
+                </a>
+
+            </div>
+
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    ♙
+                </div>
+
+                <h3>No applications yet</h3>
+
+                <p>
+                    Student registrations will appear here
+                    after they are submitted.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings | Director</title>
+<style>
+body{margin:0;font-family:Arial;background:#f4f7fb;color:#10243d}.header{background:#071d38;color:white;padding:22px}.header a{color:#cfa23b;text-decoration:none}.container{max-width:600px;margin:25px auto;padding:0 15px}.card{background:white;border-radius:15px;padding:25px;box-shadow:0 5px 20px #071d3810}input{width:100%;padding:13px;box-sizing:border-box;border:1px solid #ddd;border-radius:8px;margin:8px 0 15px}button{padding:12px 18px;background:#071d38;color:white;border:0;border-radius:8px;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="header"><a href="/director/dashboard">← Dashboard</a><h1>Settings</h1></div>
+<div class="container">
+<div class="card">
+<h2>Director Information</h2>
+<form method="POST">
+<label>Full Name</label>
+<input name="full_name" value="{{ director['full_name'] }}" required>
+<label>Username</label>
+<input value="{{ director['username'] }}" disabled>
+<button type="submit">SAVE CHANGES</button>
+</form>
+</div>
+</div>
+</body>
+</html>

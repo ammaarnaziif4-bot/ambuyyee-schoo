@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Monitoring Login | AMBUYEE SCHOOL</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:Arial,sans-serif;
+    background:
+        linear-gradient(135deg,#062443,#0b3d69);
+    padding:20px;
+}
+
+.login-card{
+    width:100%;
+    max-width:430px;
+    background:#fff;
+    border-radius:22px;
+    padding:38px;
+    box-shadow:0 25px 60px rgba(0,0,0,.22);
+}
+
+.logo{
+    width:58px;
+    height:58px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#e0ad21;
+    color:#082d52;
+    font-size:20px;
+    font-weight:900;
+    margin-bottom:20px;
+}
+
+.brand{
+    color:#e0ad21;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:3px;
+}
+
+h1{
+    margin:8px 0;
+    color:#102b45;
+    font-size:30px;
+}
+
+.subtitle{
+    color:#7a8794;
+    margin-bottom:28px;
+    line-height:1.5;
+}
+
+label{
+    display:block;
+    margin:15px 0 7px;
+    color:#536577;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.6px;
+}
+
+input{
+    width:100%;
+    height:50px;
+    border:1px solid #d8e1ea;
+    border-radius:11px;
+    padding:0 14px;
+    font-size:15px;
+}
+
+input:focus{
+    outline:none;
+    border-color:#2879d6;
+    box-shadow:0 0 0 3px rgba(40,121,214,.10);
+}
+
+button{
+    width:100%;
+    height:50px;
+    margin-top:24px;
+    border:0;
+    border-radius:11px;
+    background:#2879d6;
+    color:#fff;
+    font-size:15px;
+    font-weight:800;
+}
+
+.role{
+    margin-top:22px;
+    padding:14px;
+    border-radius:12px;
+    background:#f4f7fa;
+    color:#697887;
+    font-size:12px;
+    line-height:1.5;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-card">
+
+    <div class="logo">AS</div>
+
+    <div class="brand">AMBUYEE SCHOOL</div>
+
+    <h1>Monitoring Login</h1>
+
+    <div class="subtitle">
+        Secure access to the Student Registration Monitoring Dashboard.
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div style="
+                    background:#fff1f1;
+                    color:#b42318;
+                    padding:12px;
+                    border-radius:10px;
+                    margin-bottom:15px;
+                    font-size:13px;
+                ">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+
+        <label>USERNAME</label>
+        <input
+            type="text"
+            name="username"
+            placeholder="Enter username"
+            autocomplete="username"
+            required
+        >
+
+        <label>PASSWORD</label>
+        <input
+            type="password"
+            name="password"
+            placeholder="Enter password"
+            autocomplete="current-password"
+            required
+        >
+
+        <button type="submit">
+            Sign In
+        </button>
+
+    </form>
+
+    <div class="role">
+        Authorized monitoring access only.<br>
+        Social Affairs Officer & Education Office Monitoring.
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Dashboard | Ambuyyee School</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #10243e;
+        }
+
+        .topbar {
+            min-height: 76px;
+            padding: 0 7%;
+            background: #10243e;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .brand-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: #ffffff;
+            color: #b58a45;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 19px;
+        }
+
+        .brand strong {
+            font-size: 15px;
+            letter-spacing: 2px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notification-btn {
+            position: relative;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: white;
+            border: 1px solid rgba(255,255,255,.25);
+            border-radius: 10px;
+            font-size: 20px;
+            transition: .2s ease;
+        }
+
+        .notification-btn:hover {
+            background: #b58a45;
+            border-color: #b58a45;
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            min-width: 19px;
+            height: 19px;
+            padding: 0 5px;
+            border-radius: 20px;
+            background: #d93636;
+            color: white;
+            font-size: 10px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #10243e;
+        }
+
+        .logout {
+            text-decoration: none;
+            color: white;
+            border: 1px solid rgba(255,255,255,.35);
+            padding: 10px 17px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .logout:hover {
+            background: #b58a45;
+            border-color: #b58a45;
+        }
+
+        .container {
+            width: min(1100px, 90%);
+            margin: 45px auto;
+        }
+
+        .welcome {
+            margin-bottom: 28px;
+        }
+
+        .welcome span {
+            color: #b58a45;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        .welcome h1 {
+            margin: 8px 0;
+            font-size: clamp(27px, 4vw, 40px);
+        }
+
+        .welcome p {
+            margin: 0;
+            color: #6c7787;
+        }
+
+        .status-card {
+            background: white;
+            border-radius: 18px;
+            padding: 25px;
+            margin-bottom: 22px;
+            border: 1px solid #e4e9ef;
+            box-shadow: 0 15px 35px rgba(16,36,62,.07);
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .status-header h2 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        .status {
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .pending {
+            background: #fff4d8;
+            color: #9a6b10;
+        }
+
+        .passed {
+            background: #def7e8;
+            color: #14753d;
+        }
+
+        .failed {
+            background: #ffe2e2;
+            color: #a32626;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .info-box {
+            background: #f7f9fc;
+            border-radius: 12px;
+            padding: 17px;
+        }
+
+        .info-box span {
+            display: block;
+            color: #7b8797;
+            font-size: 11px;
+            margin-bottom: 7px;
+        }
+
+        .info-box strong {
+            font-size: 14px;
+            color: #10243e;
+        }
+
+        .message-card {
+            background: #10243e;
+            color: white;
+            border-radius: 18px;
+            padding: 25px;
+            box-shadow: 0 18px 38px rgba(16,36,62,.16);
+        }
+
+        .message-card span {
+            color: #d8b56d;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        .message-card h2 {
+            margin: 9px 0 10px;
+            font-size: 20px;
+        }
+
+        .message-card p {
+            margin: 0;
+            color: #dce4ef;
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .empty-message {
+            color: #9eabbc !important;
+            font-style: italic;
+        }
+
+        @media (max-width: 600px) {
+            .topbar {
+                padding: 0 18px;
+            }
+
+            .container {
+                width: calc(100% - 30px);
+                margin: 30px auto;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .status-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+
+        /* =========================
+           STUDENT DASHBOARD LAYOUT
+        ========================= */
+
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 255px;
+            min-height: 100vh;
+            background: #071b3a;
+            color: white;
+            padding: 25px 18px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+        }
+
+        .sidebar .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 5px 10px 30px;
+            border-bottom: 1px solid rgba(255,255,255,.10);
+        }
+
+        .sidebar .brand-logo {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: #c79a45;
+            color: #071b3a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        .sidebar .brand h2 {
+            font-size: 17px;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        .sidebar .brand span {
+            display: block;
+            color: #c79a45;
+            font-size: 10px;
+            letter-spacing: 2px;
+            margin-top: 3px;
+        }
+
+        .menu {
+            margin-top: 30px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 15px;
+            margin-bottom: 7px;
+            border-radius: 11px;
+            color: #b9c5d8;
+            font-size: 14px;
+            transition: .2s;
+        }
+
+        .menu-item span:first-child {
+            width: 22px;
+            text-align: center;
+            font-size: 17px;
+        }
+
+        .menu-item:hover {
+            background: rgba(255,255,255,.08);
+            color: white;
+        }
+
+        .menu-item.active {
+            background: #c79a45;
+            color: #071b3a;
+            font-weight: 700;
+        }
+
+        .menu-badge {
+            margin-left: auto;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 20px;
+            background: #d93636;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+        }
+
+        .sidebar .logout {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 15px;
+            color: #b9c5d8;
+            border-radius: 11px;
+            font-size: 14px;
+        }
+
+        .sidebar .logout:hover {
+            background: rgba(255,255,255,.08);
+            color: white;
+        }
+
+        .main-content {
+            margin-left: 255px;
+            width: calc(100% - 255px);
+            min-height: 100vh;
+        }
+
+        .main-content .topbar {
+            height: 76px;
+            min-height: 76px;
+            background: white;
+            border-bottom: 1px solid #e8edf4;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 35px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .notification {
+            border: none;
+            background: #f4f7fb;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            font-size: 18px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification-count {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #c79a45;
+            color: white;
+            top: 5px;
+            right: 5px;
+            font-size: 9px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .student-profile {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .student-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #071b3a;
+            color: #c79a45;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .student-info strong {
+            display: block;
+            color: #17233c;
+            font-size: 13px;
+        }
+
+        .student-info span {
+            display: block;
+            color: #8994a7;
+            font-size: 11px;
+            margin-top: 3px;
+        }
+
+        .mobile-brand {
+            display: none;
+        }
+
+        .main-content .container {
+            width: auto;
+            max-width: 1450px;
+            margin: auto;
+            padding: 35px;
+        }
+
+        @media (max-width: 800px) {
+            .sidebar {
+                width: 220px;
+            }
+
+            .main-content {
+                margin-left: 220px;
+                width: calc(100% - 220px);
+            }
+
+            .main-content .container {
+                padding: 25px 20px;
+            }
+        }
+\n    
+        /* AMBUYEE STUDENT DASHBOARD — MOBILE FINAL FIX */
+
+        @media screen and (max-width: 800px) {
+
+            html,
+            body {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+            }
+
+            .dashboard {
+                display: block !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                overflow-x: hidden !important;
+            }
+
+            /* Compact mobile sidebar */
+            .sidebar {
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                bottom: 0 !important;
+
+                width: 72px !important;
+                min-width: 72px !important;
+                max-width: 72px !important;
+
+                padding: 18px 8px !important;
+                z-index: 1000 !important;
+                overflow: hidden !important;
+            }
+
+            .sidebar .brand {
+                justify-content: center !important;
+                padding: 4px 0 22px !important;
+                gap: 0 !important;
+            }
+
+            .sidebar .brand-logo {
+                width: 46px !important;
+                height: 46px !important;
+                min-width: 46px !important;
+                font-size: 16px !important;
+            }
+
+            .sidebar .brand > div:last-child {
+                display: none !important;
+            }
+
+            .menu {
+                margin-top: 20px !important;
+            }
+
+            .menu-item {
+                width: 56px !important;
+                min-width: 56px !important;
+                height: 50px !important;
+
+                margin: 0 auto 8px !important;
+                padding: 0 !important;
+
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+
+                gap: 0 !important;
+                border-radius: 12px !important;
+            }
+
+            .menu-item span:first-child {
+                width: auto !important;
+                font-size: 19px !important;
+            }
+
+            .menu-item span:not(:first-child) {
+                display: none !important;
+            }
+
+            .menu-badge {
+                position: absolute !important;
+                margin: 0 !important;
+                top: 3px !important;
+                right: 3px !important;
+                min-width: 17px !important;
+                height: 17px !important;
+                font-size: 9px !important;
+            }
+
+            .sidebar-bottom {
+                display: none !important;
+            }
+
+            /* Main content uses the remaining screen */
+            .main-content {
+                margin-left: 72px !important;
+                width: calc(100% - 72px) !important;
+                min-width: 0 !important;
+                max-width: none !important;
+                overflow-x: hidden !important;
+            }
+
+            .main-content .topbar {
+                width: 100% !important;
+                height: 72px !important;
+                min-height: 72px !important;
+
+                padding: 0 14px !important;
+
+                justify-content: space-between !important;
+                gap: 8px !important;
+            }
+
+            .mobile-brand {
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                min-width: 0 !important;
+            }
+
+            .mobile-brand .brand-logo {
+                width: 38px !important;
+                height: 38px !important;
+                min-width: 38px !important;
+                border-radius: 10px !important;
+                font-size: 15px !important;
+            }
+
+            .mobile-brand strong {
+                font-size: 11px !important;
+                letter-spacing: 1px !important;
+                white-space: nowrap !important;
+            }
+
+            .topbar-right {
+                gap: 8px !important;
+                min-width: 0 !important;
+            }
+
+            .notification {
+                width: 38px !important;
+                height: 38px !important;
+                min-width: 38px !important;
+                font-size: 16px !important;
+            }
+
+            .student-profile {
+                gap: 7px !important;
+            }
+
+            .student-avatar {
+                width: 38px !important;
+                height: 38px !important;
+                min-width: 38px !important;
+            }
+
+            .student-info strong {
+                font-size: 11px !important;
+                max-width: 85px !important;
+                overflow-wrap: anywhere !important;
+            }
+
+            .student-info span {
+                font-size: 9px !important;
+            }
+
+            /* Content */
+            .main-content .container {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 22px 14px 35px !important;
+                min-width: 0 !important;
+            }
+
+            .welcome {
+                width: 100% !important;
+                margin-bottom: 20px !important;
+            }
+
+            .welcome h1 {
+                font-size: 27px !important;
+                line-height: 1.15 !important;
+                overflow-wrap: anywhere !important;
+            }
+
+            .welcome p {
+                font-size: 13px !important;
+                line-height: 1.6 !important;
+            }
+
+            .status-card,
+            .message-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                padding: 20px !important;
+                border-radius: 17px !important;
+                overflow: hidden !important;
+            }
+
+            .status-header {
+                width: 100% !important;
+                gap: 12px !important;
+            }
+
+            .status-header h2 {
+                font-size: 21px !important;
+                line-height: 1.2 !important;
+            }
+
+            .info-grid {
+                width: 100% !important;
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+
+            .info-box {
+                width: 100% !important;
+                min-width: 0 !important;
+                padding: 17px !important;
+            }
+
+            .info-box strong {
+                display: block !important;
+                font-size: 15px !important;
+                overflow-wrap: anywhere !important;
+            }
+
+            .message-card h2 {
+                font-size: 22px !important;
+                line-height: 1.25 !important;
+            }
+
+            .message-card p {
+                font-size: 14px !important;
+                line-height: 1.7 !important;
+                overflow-wrap: anywhere !important;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+
+            .sidebar {
+                width: 64px !important;
+                min-width: 64px !important;
+                max-width: 64px !important;
+                padding-left: 6px !important;
+                padding-right: 6px !important;
+            }
+
+            .menu-item {
+                width: 50px !important;
+                min-width: 50px !important;
+            }
+
+            .main-content {
+                margin-left: 64px !important;
+                width: calc(100% - 64px) !important;
+            }
+
+            .main-content .topbar {
+                padding: 0 10px !important;
+            }
+
+            .mobile-brand strong {
+                font-size: 10px !important;
+            }
+
+            .student-info {
+                display: none !important;
+            }
+
+            .main-content .container {
+                padding: 18px 11px 30px !important;
+            }
+
+            .welcome h1 {
+                font-size: 24px !important;
+            }
+
+            .status-card,
+            .message-card {
+                padding: 17px !important;
+            }
+        }
+
+    
+        /* AMBUYEE STUDENT MOBILE OVERLAY FIX 2 */
+
+        @media screen and (max-width: 800px) {
+
+            .sidebar {
+                width: 64px !important;
+                min-width: 64px !important;
+                max-width: 64px !important;
+                padding: 16px 6px !important;
+                overflow: hidden !important;
+                z-index: 9999 !important;
+            }
+
+            .sidebar .brand {
+                width: 52px !important;
+                min-width: 52px !important;
+                max-width: 52px !important;
+                padding: 4px 0 20px !important;
+                margin: 0 auto !important;
+                justify-content: center !important;
+                overflow: hidden !important;
+            }
+
+            .sidebar .brand > div:last-child {
+                display: none !important;
+                visibility: hidden !important;
+                width: 0 !important;
+                max-width: 0 !important;
+                overflow: hidden !important;
+            }
+
+            .sidebar .brand-logo {
+                display: flex !important;
+                width: 46px !important;
+                min-width: 46px !important;
+                max-width: 46px !important;
+                height: 46px !important;
+                margin: 0 auto !important;
+            }
+
+            .menu {
+                width: 52px !important;
+                margin: 20px auto 0 !important;
+                overflow: hidden !important;
+            }
+
+            .menu-item {
+                position: relative !important;
+                width: 52px !important;
+                min-width: 52px !important;
+                max-width: 52px !important;
+                height: 50px !important;
+                padding: 0 !important;
+                margin: 0 auto 8px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 0 !important;
+                overflow: hidden !important;
+            }
+
+            .menu-item > span:first-child {
+                display: flex !important;
+                width: 100% !important;
+                height: 100% !important;
+                align-items: center !important;
+                justify-content: center !important;
+                flex-shrink: 0 !important;
+                font-size: 19px !important;
+            }
+
+            .menu-item > span:not(:first-child),
+            .menu-item > b {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            .menu-badge {
+                display: flex !important;
+                visibility: visible !important;
+                position: absolute !important;
+                top: 2px !important;
+                right: 2px !important;
+                width: 17px !important;
+                min-width: 17px !important;
+                height: 17px !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 8px !important;
+                z-index: 5 !important;
+            }
+
+            .sidebar-bottom {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-left: 64px !important;
+                width: calc(100% - 64px) !important;
+                min-width: 0 !important;
+                max-width: none !important;
+                overflow-x: hidden !important;
+            }
+
+            .main-content .topbar {
+                width: 100% !important;
+                min-width: 0 !important;
+                padding: 0 10px !important;
+                overflow: hidden !important;
+            }
+
+            .mobile-brand {
+                display: flex !important;
+                min-width: 0 !important;
+                overflow: hidden !important;
+            }
+
+            .mobile-brand strong {
+                font-size: 10px !important;
+                white-space: nowrap !important;
+            }
+
+            .main-content .container {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 20px 12px 35px !important;
+                overflow: hidden !important;
+            }
+
+            .welcome,
+            .status-card,
+            .message-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+            }
+
+            .welcome h1 {
+                font-size: 25px !important;
+                line-height: 1.2 !important;
+                overflow-wrap: anywhere !important;
+            }
+
+            .status-header {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+
+            .sidebar {
+                width: 58px !important;
+                min-width: 58px !important;
+                max-width: 58px !important;
+                padding-left: 4px !important;
+                padding-right: 4px !important;
+            }
+
+            .sidebar .brand {
+                width: 50px !important;
+                min-width: 50px !important;
+            }
+
+            .sidebar .brand-logo {
+                width: 44px !important;
+                min-width: 44px !important;
+                height: 44px !important;
+            }
+
+            .menu {
+                width: 50px !important;
+            }
+
+            .menu-item {
+                width: 50px !important;
+                min-width: 50px !important;
+                max-width: 50px !important;
+            }
+
+            .main-content {
+                margin-left: 58px !important;
+                width: calc(100% - 58px) !important;
+            }
+
+            .main-content .container {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+
+            .student-info {
+                display: none !important;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">AS</div>
+
+            <div>
+                <h2>AMBUYEE</h2>
+                <span>SCHOOL</span>
+            </div>
+        </div>
+
+        <nav class="menu">
+
+            <a href="/student/dashboard" class="menu-item active">
+                <span>▣</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span>♙</span>
+                <span>My Profile</span>
+            </a>
+
+            <a href="/student/notifications" class="menu-item">
+                <span>🔔</span>
+                <span>Notifications</span>
+
+                {% if unread_notifications > 0 %}
+                    <b class="menu-badge">{{ unread_notifications }}</b>
+                {% endif %}
+            </a>
+
+            <a href="#" class="menu-item">
+                <span>✓</span>
+                <span>Registration Status</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span>✉</span>
+                <span>Messages</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                <span>⚙</span>
+                <span>Settings</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <a href="/student/logout" class="logout">
+                <span>↪</span>
+                <span>Logout</span>
+            </a>
+
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div class="mobile-brand">
+                <div class="brand-logo">AS</div>
+                <strong>AMBUYEE SCHOOL</strong>
+            </div>
+
+            <div class="topbar-right">
+
+                <a href="/student/notifications" class="notification">
+                    🔔
+                    {% if unread_notifications > 0 %}
+                        <span class="notification-count">
+                            {{ unread_notifications }}
+                        </span>
+                    {% endif %}
+                </a>
+
+                <div class="student-profile">
+
+                    <div class="student-avatar">
+                        {{ student["full_name"][0] }}
+                    </div>
+
+                    <div class="student-info">
+                        <strong>{{ student["full_name"] }}</strong>
+                        <span>Student</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+    <section class="welcome">
+        <span>STUDENT PORTAL</span>
+
+        <h1>
+            Welcome, {{ student["full_name"] }}
+        </h1>
+
+        <p>
+            View your registration information and application status.
+        </p>
+    </section>
+
+
+    <section class="status-card">
+
+        <div class="status-header">
+
+            <h2>Registration Status</h2>
+
+            {% if student["registration_status"] == "passed" %}
+                <span class="status passed">Passed</span>
+
+            {% elif student["registration_status"] == "failed" %}
+                <span class="status failed">Failed</span>
+
+            {% else %}
+                <span class="status pending">Pending Review</span>
+            {% endif %}
+
+        </div>
+
+
+        <div class="info-grid">
+
+            <div class="info-box">
+                <span>Full Name</span>
+                <strong>{{ student["full_name"] }}</strong>
+            </div>
+
+            <div class="info-box">
+                <span>National ID</span>
+                <strong>{{ student["national_id"] }}</strong>
+            </div>
+
+            <div class="info-box">
+                <span>Class</span>
+                <strong>{{ student["class_name"] }}</strong>
+            </div>
+
+            <div class="info-box">
+                <span>Stream</span>
+                <strong>
+                    {{ student["stream"] or "Not applicable" }}
+                </strong>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="message-card">
+
+        <span>TEACHER MESSAGE</span>
+
+        <h2>Review Message</h2>
+
+        {% if student["teacher_message"] %}
+            <p>{{ student["teacher_message"] }}</p>
+        {% else %}
+            <p class="empty-message">
+                No message from the teacher yet.
+            </p>
+        {% endif %}
+
+    </section>
+
+</main>
+
+</body>
+</html>

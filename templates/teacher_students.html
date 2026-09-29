@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students | AMBUYEE SCHOOL</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher_dashboard.css') }}">
+</head>
+
+<body class="teacher-students-page">
+
+<div class="dashboard-layout">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo">AS</div>
+            <div>
+                <h2>AMBUYEE</h2>
+                <span>SCHOOL</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+    <a href="{{ url_for('teacher_dashboard') }}">
+        <span>▣</span>
+        <span>Dashboard</span>
+    </a>
+
+    <a href="{{ url_for('teacher_students') }}" class="active">
+        <span>♙</span>
+        <span>Students</span>
+    </a>
+
+    <a href="#">
+        <span>✓</span>
+        <span>Applications</span>
+    </a>
+
+    <a href="#">
+        <span>✉</span>
+        <span>Messages</span>
+    </a>
+
+    <a href="#">
+        <span>⚙</span>
+        <span>Settings</span>
+    </a>
+</nav>
+
+        <a href="{{ url_for('teacher_logout') }}" class="logout-link">
+            Logout
+        </a>
+    </aside>
+
+    <main class="main-content">
+
+        <div class="topbar">
+            <div>
+                <h1>Students</h1>
+                <p>Registered students</p>
+            </div>
+
+            <div class="teacher-profile">
+                {{ session.get("teacher_name", "Teacher") }}
+            </div>
+        </div>
+
+        <section class="content-section">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Registered Students</h2>
+                    <p>All students currently registered in the school.</p>
+                </div>
+
+                <div>
+                    <strong>{{ students|length }}</strong>
+                    <span>Total</span>
+                </div>
+            </div>
+
+
+            
+            {% if selected_class %}
+            <div class="pdf-download-area">
+                <a href="{{ url_for('teacher_students_pdf', class_name=selected_class) }}"
+                   class="pdf-download-btn">
+                    <span>↓</span>
+                    DOWNLOAD PDF
+                </a>
+            </div>
+            {% endif %}
+
+<div class="class-filter">
+
+                <div class="class-filter-title">
+                    <span>CLASS / SECTION</span>
+                    <small>Choose a class to view students</small>
+                </div>
+
+                <form method="GET"
+                      action="{{ url_for('teacher_students') }}"
+                      class="class-filter-form">
+
+                    <select name="class_name" onchange="this.form.submit()">
+                        <option value="">All Students</option>
+
+                        {% for class_name in allowed_classes %}
+                            <option value="{{ class_name }}"
+                                {% if selected_class == class_name %}selected{% endif %}>
+                                {{ class_name }}
+                            </option>
+                        {% endfor %}
+
+                    </select>
+
+                    <noscript>
+                        <button type="submit">FILTER</button>
+                    </noscript>
+
+                </form>
+
+            </div>
+
+            {% if students %}
+
+            <div class="student-cards">
+
+    {% for student in students %}
+
+    <div class="student-card">
+
+        <div class="student-card-main">
+
+            <div class="student-avatar">
+                {{ student["full_name"][0] }}
+            </div>
+
+            <div class="student-name">
+                <h3>{{ student["full_name"] }}</h3>
+                <span>Student #{{ loop.index }}</span>
+            </div>
+
+            <span class="status-badge {{ student['registration_status'] }}">
+                {{ student["registration_status"] }}
+            </span>
+
+            <a href="{{ url_for('teacher_student_details', student_id=student['id']) }}"
+               class="student-view-btn">
+                VIEW
+                <span>→</span>
+            </a>
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+            {% else %}
+
+            <div class="empty-state">
+                <h3>No Students Found</h3>
+                <p>There are no registered students yet.</p>
+            </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

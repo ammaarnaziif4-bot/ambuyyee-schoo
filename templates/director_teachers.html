@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teachers | Director</title>
+<style>
+body{margin:0;font-family:Arial;background:#f4f7fb;color:#10243d}.header{background:#071d38;color:white;padding:22px}.header a{color:#cfa23b;text-decoration:none}.container{max-width:900px;margin:25px auto;padding:0 15px}.card{background:white;border-radius:15px;padding:20px;margin-bottom:15px;box-shadow:0 5px 20px #071d3810}input{width:100%;padding:12px;margin:7px 0 12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box}button{padding:12px 18px;background:#071d38;color:white;border:0;border-radius:8px;font-weight:bold}.teacher{border-top:1px solid #eee;padding:12px 0}
+</style>
+</head>
+<body>
+<div class="header"><a href="/director/dashboard">← Dashboard</a><h1>Teachers</h1></div>
+<div class="container">
+
+<div class="card">
+<h2>Add Teacher</h2>
+<form method="POST">
+<input name="full_name" placeholder="Full name" required>
+<input name="username" placeholder="Username" required>
+<input name="password" type="password" placeholder="Password (minimum 6)" minlength="6" required>
+<button type="submit">CREATE TEACHER</button>
+</form>
+</div>
+
+<div class="card">
+<h2>Teacher Accounts</h2>
+{% for teacher in teachers %}
+<div class="teacher">
+<strong>{{ teacher["full_name"] }}</strong><br>
+<small>@{{ teacher["username"] }}</small>
+</div>
+{% else %}
+<p>No teachers found.</p>
+{% endfor %}
+</div>
+
+</div>
+</body>
+</html>

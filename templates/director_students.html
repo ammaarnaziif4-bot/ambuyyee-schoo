@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Students | Director</title>
+<style>
+body{margin:0;font-family:Arial;background:#f4f7fb;color:#10243d}
+.header{background:#071d38;color:white;padding:22px}
+.header a{color:#cfa23b;text-decoration:none}
+.container{max-width:1100px;margin:25px auto;padding:0 15px}
+.card{background:white;border-radius:15px;padding:20px;margin-bottom:12px;box-shadow:0 5px 20px #071d3810}
+select{padding:11px;border:1px solid #ddd;border-radius:8px}
+h1{margin:0}.student{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.status{padding:6px 10px;border-radius:8px;background:#eef2f7;font-size:12px}
+@media(max-width:650px){.student{display:block}.status{display:inline-block;margin-top:8px}}
+</style>
+</head>
+<body>
+<div class="header">
+<a href="/director/dashboard">← Dashboard</a>
+<h1>Students</h1>
+</div>
+<div class="container">
+<form method="GET">
+<select name="class_name" onchange="this.form.submit()">
+<option value="">All Students</option>
+{% for c in allowed_classes %}
+<option value="{{ c }}" {% if selected_class==c %}selected{% endif %}>{{ c }}</option>
+{% endfor %}
+</select>
+</form>
+
+<p><strong>{{ students|length }}</strong> students found.</p>
+
+{% for student in students %}
+<div class="card student">
+<div>
+<strong>{{ student["full_name"] }}</strong><br>
+<small>National ID: {{ student["national_id"] }}</small><br>
+<small>Ganda: {{ student["ganda"] or "-" }}</small><br>
+<small>Class: {{ student["class_name"] }}</small>
+</div>
+<span class="status">{{ student["registration_status"] }}</span>
+</div>
+{% else %}
+<div class="card">No students found.</div>
+{% endfor %}
+</div>
+</body>
+</html>

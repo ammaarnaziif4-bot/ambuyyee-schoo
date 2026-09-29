@@ -1,0 +1,2402 @@
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+import sqlite3
+import os
+from werkzeug.utils import secure_filename
+
+from werkzeug.security import generate_password_hash, check_password_hash
+
+app = Flask(__name__)
+app.secret_key = "ambuyyee-school-secret-key"
+
+DATABASE = "database/school.db"
+UPLOAD_FOLDER = "static/uploads"
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
+
+IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+PAYMENT_RECEIPT_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "pdf"}
+
+
+def get_db():
+    conn = sqlite3.connect(
+        DATABASE,
+        timeout=30
+    )
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def allowed_file(filename, allowed_extensions):
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower() in allowed_extensions
+    )
+
+
+def ensure_column(conn, column_name, column_definition):
+
+    columns = conn.execute(
+        "PRAGMA table_info(students)"
+    ).fetchall()
+
+    existing_columns = [
+        column["name"] for column in columns
+    ]
+
+    if column_name not in existing_columns:
+
+        conn.execute(
+            f"ALTER TABLE students ADD COLUMN "
+            f"{column_name} {column_definition}"
+        )
+
+
+def init_db():
+
+    os.makedirs("database", exist_ok=True)
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+    conn = get_db()
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS teachers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            full_name TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS directors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            full_name TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS students (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            full_name TEXT NOT NULL,
+            sex TEXT NOT NULL,
+            age INTEGER NOT NULL,
+            birth_date TEXT NOT NULL,
+            national_id TEXT NOT NULL UNIQUE,
+            class_name TEXT NOT NULL,
+            stream TEXT,
+            payment_required INTEGER DEFAULT 0,
+            payment_status TEXT DEFAULT 'not_required'
+        )
+    """)
+
+    # Existing additional fields
+
+    ensure_column(conn, "ganda", "TEXT")
+    ensure_column(conn, "student_photo", "TEXT")
+    ensure_column(conn, "id_front", "TEXT")
+    ensure_column(conn, "id_back", "TEXT")
+    ensure_column(conn, "payment_amount", "INTEGER DEFAULT 0")
+    ensure_column(
+        conn,
+        "registration_status",
+        "TEXT DEFAULT 'pending'"
+    )
+
+    # New payment fields
+
+    ensure_column(
+        conn,
+        "payment_reference",
+        "TEXT"
+    )
+
+    ensure_column(
+        conn,
+        "payment_receipt",
+        "TEXT"
+    )
+
+    # Create default director account if none exists
+    director = conn.execute(
+        "SELECT id FROM directors WHERE username = ?",
+        ("director",)
+    ).fetchone()
+
+    if director is None:
+        conn.execute(
+            """
+            INSERT INTO directors
+            (username, password_hash, full_name)
+            VALUES (?, ?, ?)
+            """,
+            (
+                "director",
+                generate_password_hash("Director@123"),
+                "School Director"
+            )
+        )
+
+    # Academic years
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS academic_years (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            year_name TEXT NOT NULL UNIQUE,
+            is_active INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Database backup records
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS registration_targets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            academic_year_id INTEGER NOT NULL UNIQUE,
+            total_students INTEGER NOT NULL DEFAULT 0,
+            grade9_target INTEGER NOT NULL DEFAULT 0,
+            grade10_target INTEGER NOT NULL DEFAULT 0,
+            grade11_target INTEGER NOT NULL DEFAULT 0,
+            grade12_target INTEGER NOT NULL DEFAULT 0,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (academic_year_id) REFERENCES academic_years(id)
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS system_backups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Add academic year field to students without destroying old data
+    ensure_column(conn, "academic_year_id", "INTEGER")
+
+    # Create a first active academic year if none exists
+    active_year = conn.execute(
+        "SELECT id FROM academic_years WHERE is_active = 1 LIMIT 1"
+    ).fetchone()
+
+    if active_year is None:
+        existing_year = conn.execute(
+            "SELECT id FROM academic_years ORDER BY id LIMIT 1"
+        ).fetchone()
+
+        if existing_year:
+            conn.execute(
+                "UPDATE academic_years SET is_active = 1 WHERE id = ?",
+                (existing_year["id"],)
+            )
+        else:
+            cursor = conn.execute(
+                """
+                INSERT INTO academic_years
+                (year_name, is_active)
+                VALUES (?, 1)
+                """,
+                ("2026/2027",)
+            )
+            year_id = cursor.lastrowid
+
+            conn.execute(
+                """
+                UPDATE students
+                SET academic_year_id = ?
+                WHERE academic_year_id IS NULL
+                """,
+                (year_id,)
+            )
+
+    conn.commit()
+    conn.close()
+
+
+@app.route("/")
+def home():
+    conn = get_db()
+
+    # Active academic year
+    active_year = conn.execute(
+        """
+        SELECT id, year_name
+        FROM academic_years
+        WHERE is_active = 1
+        LIMIT 1
+        """
+    ).fetchone()
+
+    if active_year:
+        year_id = active_year["id"]
+        year_name = active_year["year_name"]
+    else:
+        year_id = None
+        year_name = "Current Academic Year"
+
+    # Home page statistics
+    # Total Students = academic-year registration target.
+    # Registered Students = completed registrations only.
+    # Approved Students = teacher-approved registrations.
+    # Pending students are intentionally excluded.
+    total_students = 0
+    registered_students = 0
+    approved_students = 0
+
+    if year_id:
+        target_row = conn.execute(
+            """
+            SELECT total_students
+            FROM registration_targets
+            WHERE academic_year_id = ?
+            """,
+            (year_id,)
+        ).fetchone()
+
+        if target_row:
+            total_students = target_row["total_students"] or 0
+
+        registered_students = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM students
+            WHERE academic_year_id = ?
+            AND registration_status IN ('passed', 'failed')
+            """,
+            (year_id,)
+        ).fetchone()[0]
+
+        approved_students = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM students
+            WHERE academic_year_id = ?
+            AND registration_status = 'passed'
+            """,
+            (year_id,)
+        ).fetchone()[0]
+
+        total_students = registered_students
+
+    # Grade statistics
+    grade_stats = []
+
+    for grade in [9, 10, 11, 12]:
+        registered = 0
+        approved = 0
+
+        if year_id:
+            registered = conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM students
+                WHERE academic_year_id = ?
+                AND registration_status IN ('passed', 'failed')
+                AND class_name LIKE ?
+                """,
+                (year_id, f"{grade}%")
+            ).fetchone()[0]
+
+            approved = conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM students
+                WHERE academic_year_id = ?
+                AND registration_status = 'passed'
+                AND class_name LIKE ?
+                """,
+                (year_id, f"{grade}%")
+            ).fetchone()[0]
+
+        percentage = (
+            round((approved / registered) * 100, 1)
+            if registered > 0 else 0
+        )
+
+        grade_stats.append({
+            "grade": grade,
+            "registered": registered,
+            "approved": approved,
+            "percentage": percentage
+        })
+
+    # Class / section statistics
+    class_stats = []
+
+    if year_id:
+        rows = conn.execute(
+            """
+            SELECT
+                class_name,
+                COUNT(*) AS registered,
+                SUM(
+                    CASE
+                        WHEN registration_status = 'passed'
+                        THEN 1
+                        ELSE 0
+                    END
+                ) AS approved
+            FROM students
+            WHERE academic_year_id = ?
+            AND registration_status IN ('passed', 'failed')
+            AND class_name IS NOT NULL
+            AND TRIM(class_name) != ''
+            GROUP BY class_name
+            ORDER BY class_name ASC
+            """,
+            (year_id,)
+        ).fetchall()
+
+        for row in rows:
+            registered = row["registered"] or 0
+            approved = row["approved"] or 0
+
+            percentage = (
+                round((approved / registered) * 100, 1)
+                if registered > 0 else 0
+            )
+
+            class_stats.append({
+                "class_name": row["class_name"],
+                "registered": registered,
+                "approved": approved,
+                "percentage": percentage
+            })
+
+    conn.close()
+
+    return render_template(
+        "index.html",
+        active_year_name=year_name,
+        total_students=total_students,
+        registered_students=registered_students,
+        approved_students=approved_students,
+        grade_stats=grade_stats,
+        class_stats=class_stats
+    )
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+
+    if request.method == "POST":
+
+        # --------------------------------
+        # PERSONAL INFORMATION
+        # --------------------------------
+
+        full_name = request.form.get(
+            "full_name", ""
+        ).strip()
+
+        sex = request.form.get(
+            "sex", ""
+        ).strip()
+
+        age = request.form.get(
+            "age", ""
+        ).strip()
+
+        birth_date = request.form.get(
+            "birth_date", ""
+        ).strip()
+
+        national_id = request.form.get(
+            "national_id", ""
+        ).strip()
+
+        ganda = request.form.get(
+            "ganda", ""
+        ).strip()
+
+        password = request.form.get(
+            "password", ""
+        )
+
+        confirm_password = request.form.get(
+            "confirm_password", ""
+        )
+
+
+        # --------------------------------
+        # SCHOOL INFORMATION
+        # --------------------------------
+
+        class_name = request.form.get(
+            "class_name", ""
+        ).strip()
+
+        stream = request.form.get(
+            "stream", ""
+        ).strip()
+
+
+        # --------------------------------
+        # BASIC VALIDATION
+        # --------------------------------
+
+        if password != confirm_password:
+
+            flash(
+                "Passwords do not match."
+            )
+
+            return redirect(url_for("register"))
+
+
+        if len(password) < 6:
+
+            flash(
+                "Password must be at least 6 characters."
+            )
+
+            return redirect(url_for("register"))
+
+
+        if not full_name:
+
+            flash(
+                "Please enter the student's full name."
+            )
+
+            return redirect(url_for("register"))
+
+
+        if not national_id:
+
+            flash(
+                "Please enter the National ID."
+            )
+
+            return redirect(url_for("register"))
+
+
+        if not ganda:
+
+            flash(
+                "Please enter the Ganda."
+            )
+
+            return redirect(url_for("register"))
+
+
+        if not age:
+
+            flash(
+                "Please enter the student's age."
+            )
+
+            return redirect(url_for("register"))
+
+
+        if not birth_date:
+
+            flash(
+                "Please select the birth date."
+            )
+
+            return redirect(url_for("register"))
+
+
+        if not sex:
+
+            flash(
+                "Please select the student's sex."
+            )
+
+            return redirect(url_for("register"))
+
+
+        if not class_name:
+
+            flash(
+                "Please select the student's grade/class."
+            )
+
+            return redirect(url_for("register"))
+
+
+        # --------------------------------
+        # STREAM VALIDATION
+        # --------------------------------
+
+        if class_name in ["11", "12"]:
+
+            if stream not in [
+                "Natural Science",
+                "Social Science"
+            ]:
+
+                flash(
+                    "Please select a stream for Grade 11 or Grade 12."
+                )
+
+                return redirect(
+                    url_for("register")
+                )
+
+        else:
+
+            stream = None
+
+
+        # --------------------------------
+        # PAYMENT INFORMATION
+        # Grade 9 = 500 Birr
+        # --------------------------------
+
+        payment_reference = request.form.get(
+            "payment_reference", ""
+        ).strip()
+
+        payment_receipt = request.files.get(
+            "payment_receipt"
+        )
+
+
+        if class_name.startswith("9"):
+
+            payment_required = 1
+            payment_amount = 500
+            payment_status = "pending"
+
+
+            # Payment reference is required
+
+            if not payment_reference:
+
+                flash(
+                    "Please enter the payment reference / receipt number."
+                )
+
+                return redirect(
+                    url_for("register")
+                )
+
+
+            # Payment receipt is required
+
+            if (
+                not payment_receipt
+                or not payment_receipt.filename
+            ):
+
+                flash(
+                    "Please upload your payment receipt."
+                )
+
+                return redirect(
+                    url_for("register")
+                )
+
+
+            # Check receipt file type
+
+            if not allowed_file(
+                payment_receipt.filename,
+                PAYMENT_RECEIPT_EXTENSIONS
+            ):
+
+                flash(
+                    "Payment receipt must be JPG, JPEG, PNG, WEBP or PDF."
+                )
+
+                return redirect(
+                    url_for("register")
+                )
+
+        else:
+
+            payment_required = 0
+            payment_amount = 0
+            payment_status = "not_required"
+
+            payment_reference = None
+            payment_receipt = None
+
+
+        # --------------------------------
+        # OTHER FILE UPLOADS
+        # --------------------------------
+
+        student_photo = request.files.get(
+            "student_photo"
+        )
+
+        id_front = request.files.get(
+            "id_front"
+        )
+
+        id_back = request.files.get(
+            "id_back"
+        )
+
+
+        uploaded_files = {
+
+            "student_photo": student_photo,
+
+            "id_front": id_front,
+
+            "id_back": id_back
+        }
+
+
+        saved_files = {}
+
+
+        # --------------------------------
+        # SAVE STUDENT DOCUMENTS
+        # --------------------------------
+
+        for field_name, file in uploaded_files.items():
+
+            if file and file.filename:
+
+                if not allowed_file(
+                    file.filename,
+                    IMAGE_EXTENSIONS
+                ):
+
+                    flash(
+                        "Student documents must be JPG, JPEG, PNG or WEBP."
+                    )
+
+                    return redirect(
+                        url_for("register")
+                    )
+
+
+                safe_name = secure_filename(
+                    file.filename
+                )
+
+
+                unique_name = (
+                    f"{national_id}_{field_name}_{safe_name}"
+                )
+
+
+                file_path = os.path.join(
+                    app.config["UPLOAD_FOLDER"],
+                    unique_name
+                )
+
+
+                file.save(file_path)
+
+
+                saved_files[field_name] = unique_name
+
+            else:
+
+                saved_files[field_name] = None
+
+
+        # --------------------------------
+        # SAVE PAYMENT RECEIPT
+        # --------------------------------
+
+        saved_payment_receipt = None
+
+
+        if (
+            payment_receipt
+            and payment_receipt.filename
+        ):
+
+            safe_receipt_name = secure_filename(
+                payment_receipt.filename
+            )
+
+
+            unique_receipt_name = (
+                f"{national_id}_payment_receipt_{safe_receipt_name}"
+            )
+
+
+            receipt_path = os.path.join(
+                app.config["UPLOAD_FOLDER"],
+                unique_receipt_name
+            )
+
+
+            payment_receipt.save(
+                receipt_path
+            )
+
+
+            saved_payment_receipt = (
+                unique_receipt_name
+            )
+
+
+        # --------------------------------
+        # SAVE EVERYTHING TO DATABASE
+        # --------------------------------
+        # --------------------------------
+        # HASH STUDENT PASSWORD
+        # --------------------------------
+
+        password_hash = generate_password_hash(password)
+
+
+
+        try:
+
+            conn = get_db()
+
+            active_year = conn.execute(
+                """
+                SELECT id
+                FROM academic_years
+                WHERE is_active = 1
+                LIMIT 1
+                """
+            ).fetchone()
+
+            if active_year is None:
+                raise Exception("No active academic year found.")
+
+            academic_year_id = active_year["id"]
+
+            conn.execute("""
+                INSERT INTO students
+                (
+                    full_name,
+                    sex,
+                    age,
+                    birth_date,
+                    national_id,
+                    class_name,
+                    stream,
+                    payment_required,
+                    payment_status,
+                    ganda,
+                    student_photo,
+                    id_front,
+                    id_back,
+                    payment_amount,
+                    payment_reference,
+                    payment_receipt,
+                    registration_status,
+                    password_hash,
+                    academic_year_id
+                )
+                VALUES
+                (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                )
+            """, (
+
+                full_name,
+                sex,
+                age,
+                birth_date,
+                national_id,
+                class_name,
+                stream,
+                payment_required,
+                payment_status,
+                ganda,
+                saved_files["student_photo"],
+                saved_files["id_front"],
+                saved_files["id_back"],
+                payment_amount,
+                payment_reference,
+                saved_payment_receipt,
+                "pending",
+                password_hash,
+                academic_year_id
+            ))
+
+
+            conn.commit()
+            conn.close()
+
+
+            flash(
+                "Registration submitted successfully. "
+                "Your application is now waiting for teacher review."
+            )
+
+
+            return redirect(
+                url_for("register")
+            )
+
+
+        except sqlite3.IntegrityError:
+
+            flash(
+                "This National ID is already registered."
+            )
+
+            return redirect(
+                url_for("register")
+            )
+
+
+        except Exception as e:
+
+            flash(
+                "Registration failed. Please try again."
+            )
+
+            print(
+                "Registration error:",
+                e
+            )
+
+            return redirect(
+                url_for("register")
+            )
+
+
+    return render_template(
+        "register.html"
+    )
+
+@app.route("/login")
+def login():
+    return render_template("login.html")
+
+
+@app.route("/director/login", methods=["GET", "POST"])
+def director_login():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        if not username or not password:
+            flash("Please enter your username and password.")
+            return redirect(url_for("director_login"))
+
+        conn = get_db()
+        director = conn.execute(
+            "SELECT * FROM directors WHERE username = ?",
+            (username,)
+        ).fetchone()
+        conn.close()
+
+        if director and check_password_hash(
+            director["password_hash"], password
+        ):
+            session["director_id"] = director["id"]
+            session["director_username"] = director["username"]
+            session["director_name"] = director["full_name"]
+            session["director_logged_in"] = True
+
+            return redirect(url_for("director_dashboard"))
+
+        flash("Invalid username or password.")
+        return redirect(url_for("director_login"))
+
+    return render_template("director_login.html")
+
+
+@app.route("/student/login", methods=["GET", "POST"])
+def student_login():
+    if request.method == "POST":
+        national_id = request.form.get("national_id", "").strip()
+        password = request.form.get("password", "")
+
+        if not national_id or not password:
+            flash("Please enter your National ID and password.")
+            return redirect(url_for("student_login"))
+
+        conn = get_db()
+        student = conn.execute(
+            "SELECT * FROM students WHERE national_id = ?",
+            (national_id,)
+        ).fetchone()
+        conn.close()
+
+        if student and student["password_hash"] and check_password_hash(
+            student["password_hash"],
+            password
+        ):
+            session["student_id"] = student["id"]
+            session["student_logged_in"] = True
+            return redirect(url_for("student_dashboard"))
+
+        flash("Invalid National ID or password.")
+        return redirect(url_for("student_login"))
+
+    return render_template("student_login.html")
+
+
+@app.route("/teacher/login", methods=["GET", "POST"])
+def teacher_login():
+
+    if request.method == "POST":
+
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        if not username or not password:
+            flash("Please enter your username and password.")
+            return redirect(url_for("teacher_login"))
+
+        conn = get_db()
+
+        teacher = conn.execute(
+            """
+            SELECT *
+            FROM teachers
+            WHERE username = ?
+            """,
+            (username,)
+        ).fetchone()
+
+        conn.close()
+
+        if teacher and check_password_hash(
+            teacher["password_hash"],
+            password
+        ):
+
+            # Create teacher session
+            session["teacher_id"] = teacher["id"]
+            session["teacher_username"] = teacher["username"]
+            session["teacher_name"] = teacher["full_name"]
+            session["teacher_logged_in"] = True
+
+            return redirect(
+                url_for("teacher_dashboard")
+            )
+
+        flash("Invalid username or password.")
+        return redirect(url_for("teacher_login"))
+
+    return render_template("teacher_login.html")
+
+@app.route("/teacher/dashboard")
+def teacher_dashboard():
+    if not session.get("teacher_logged_in"):
+        flash("Please login as a teacher first.")
+        return redirect(url_for("teacher_login"))
+
+    conn = get_db()
+
+    active_year = conn.execute(
+        """
+        SELECT id, year_name
+        FROM academic_years
+        WHERE is_active = 1
+        LIMIT 1
+        """
+    ).fetchone()
+
+    if active_year:
+        active_year_id = active_year["id"]
+        active_year_name = active_year["year_name"]
+
+        total_students = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM students
+            WHERE academic_year_id = ?
+            """,
+            (active_year_id,)
+        ).fetchone()[0]
+
+        pending_students = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM students
+            WHERE academic_year_id = ?
+            AND registration_status = 'pending'
+            """,
+            (active_year_id,)
+        ).fetchone()[0]
+
+        passed_students = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM students
+            WHERE academic_year_id = ?
+            AND registration_status = 'passed'
+            """
+        , (active_year_id,)).fetchone()[0]
+
+        failed_students = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM students
+            WHERE academic_year_id = ?
+            AND registration_status = 'failed'
+            """,
+            (active_year_id,)
+        ).fetchone()[0]
+
+    else:
+        active_year_name = "No Active Year"
+        total_students = 0
+        pending_students = 0
+        passed_students = 0
+        failed_students = 0
+
+    conn.close()
+
+    return render_template(
+        "teacher_dashboard.html",
+        total_students=total_students,
+        pending_students=pending_students,
+        passed_students=passed_students,
+        failed_students=failed_students,
+        active_year_name=active_year_name
+    )
+
+
+@app.route("/teacher/students")
+def teacher_students():
+    if not session.get("teacher_logged_in"):
+        flash("Please login as a teacher first.")
+        return redirect(url_for("teacher_login"))
+
+    selected_class = request.args.get("class_name", "").strip()
+
+    allowed_classes = [
+        "9A", "9B", "9C", "9D", "9E", "9F",
+        "10A", "10B", "10C", "10D", "10E", "10F",
+        "11", "12"
+    ]
+
+    conn = get_db()
+
+    active_year = conn.execute(
+        """
+        SELECT id, year_name
+        FROM academic_years
+        WHERE is_active = 1
+        LIMIT 1
+        """
+    ).fetchone()
+
+    if active_year is None:
+        conn.close()
+        return render_template(
+            "teacher_students.html",
+            students=[],
+            selected_class="",
+            allowed_classes=allowed_classes,
+            active_year_name="No Active Year"
+        )
+
+    active_year_id = active_year["id"]
+    active_year_name = active_year["year_name"]
+
+    if selected_class in allowed_classes:
+        students = conn.execute(
+            """
+            SELECT id, full_name, national_id, ganda,
+                   class_name, stream, registration_status
+            FROM students
+            WHERE academic_year_id = ?
+              AND class_name = ?
+            ORDER BY full_name COLLATE NOCASE ASC
+            """,
+            (active_year_id, selected_class)
+        ).fetchall()
+    else:
+        selected_class = ""
+        students = conn.execute(
+            """
+            SELECT id, full_name, national_id, ganda,
+                   class_name, stream, registration_status
+            FROM students
+            WHERE academic_year_id = ?
+            ORDER BY full_name COLLATE NOCASE ASC
+            """,
+            (active_year_id,)
+        ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "teacher_students.html",
+        students=students,
+        selected_class=selected_class,
+        allowed_classes=allowed_classes,
+        active_year_name=active_year_name
+    )
+
+
+@app.route("/teacher/students/pdf")
+def teacher_students_pdf():
+
+    if not session.get("teacher_logged_in"):
+        flash("Please login as a teacher first.")
+        return redirect(url_for("teacher_login"))
+
+    from io import BytesIO
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from flask import send_file
+
+    selected_class = request.args.get("class_name", "").strip()
+
+    allowed_classes = [
+        "9A", "9B", "9C", "9D", "9E", "9F",
+        "10A", "10B", "10C", "10D", "10E", "10F",
+        "11", "12"
+    ]
+
+    if selected_class not in allowed_classes:
+        flash("Please select a valid class or section.")
+        return redirect(url_for("teacher_students"))
+
+    conn = get_db()
+
+    students = conn.execute(
+        """
+        SELECT full_name, national_id, class_name, stream
+        FROM students
+        WHERE class_name = ?
+        ORDER BY full_name COLLATE NOCASE ASC
+        """,
+        (selected_class,)
+    ).fetchall()
+
+    conn.close()
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=40,
+        bottomMargin=40
+    )
+
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        "AttendanceTitle",
+        parent=styles["Title"],
+        alignment=TA_CENTER,
+        fontSize=18,
+        leading=22,
+        spaceAfter=8
+    )
+
+    subtitle_style = ParagraphStyle(
+        "AttendanceSubtitle",
+        parent=styles["Normal"],
+        alignment=TA_CENTER,
+        fontSize=11,
+        leading=14,
+        spaceAfter=18
+    )
+
+    elements = []
+
+    elements.append(Paragraph("AMBUYEE SCHOOL", title_style))
+    elements.append(
+        Paragraph(
+            f"Attendance List — Class / Section: {selected_class}",
+            subtitle_style
+        )
+    )
+
+    data = [["No.", "Student Name", "National ID", "Attendance"]]
+
+    for number, student in enumerate(students, start=1):
+        data.append([
+            str(number),
+            student["full_name"],
+            student["national_id"],
+            "☐"
+        ])
+
+    if not students:
+        data.append(["", "No students registered", "", ""])
+
+    table = Table(
+        data,
+        colWidths=[38, 190, 150, 85],
+        repeatRows=1
+    )
+
+    table.setStyle(
+        TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#071b3a")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, 0), 9),
+            ("ALIGN", (0, 0), (0, -1), "CENTER"),
+            ("ALIGN", (-1, 1), (-1, -1), "CENTER"),
+            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+            ("FONTSIZE", (0, 1), (-1, -1), 9),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cfd6e0")),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [
+                colors.white,
+                colors.HexColor("#f6f8fb")
+            ]),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING", (0, 0), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ])
+    )
+
+    elements.append(table)
+    elements.append(Spacer(1, 20))
+
+    elements.append(
+        Paragraph(
+            "Teacher Signature: ________________________________",
+            styles["Normal"]
+        )
+    )
+
+    doc.build(elements)
+
+    buffer.seek(0)
+
+    filename = f"Ambuyyee_Attendance_{selected_class}.pdf"
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/pdf"
+    )
+
+
+@app.route("/teacher/student/<int:student_id>")
+def teacher_student_details(student_id):
+
+    if not session.get("teacher_logged_in"):
+        flash("Please login as a teacher first.")
+        return redirect(url_for("teacher_login"))
+
+    conn = get_db()
+
+    student = conn.execute(
+        """
+        SELECT *
+        FROM students
+        WHERE id = ?
+        """,
+        (student_id,)
+    ).fetchone()
+
+    conn.close()
+
+    if student is None:
+        flash("Student not found.")
+        return redirect(url_for("teacher_students"))
+
+    return render_template(
+        "teacher_student_details.html",
+        student=student
+    )
+
+
+@app.route("/teacher/student/<int:student_id>/review", methods=["POST"])
+def teacher_review_student(student_id):
+
+    if not session.get("teacher_logged_in"):
+        flash("Please login as a teacher first.")
+        return redirect(url_for("teacher_login"))
+
+    status = request.form.get("registration_status", "").strip().lower()
+    teacher_message = request.form.get("teacher_message", "").strip()
+
+    if status not in {"passed", "failed"}:
+        flash("Please select PASS or FAIL.")
+        return redirect(
+            url_for("teacher_student_details", student_id=student_id)
+        )
+
+    conn = get_db()
+
+    student = conn.execute(
+        "SELECT id FROM students WHERE id = ?",
+        (student_id,)
+    ).fetchone()
+
+    if student is None:
+        conn.close()
+        flash("Student not found.")
+        return redirect(url_for("teacher_students"))
+
+    conn.execute(
+        """
+        UPDATE students
+        SET registration_status = ?,
+            teacher_message = ?,
+            reviewed_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """,
+        (status, teacher_message, student_id)
+    )
+
+    if teacher_message:
+        conn.execute(
+            """
+            INSERT INTO notifications
+            (student_id, message, is_read)
+            VALUES (?, ?, 0)
+            """,
+            (student_id, teacher_message)
+        )
+
+    conn.commit()
+    conn.close()
+
+    flash("Student review saved successfully.")
+    return redirect(
+        url_for("teacher_student_details", student_id=student_id)
+    )
+
+
+@app.route("/director/dashboard")
+def director_dashboard():
+    if not session.get("director_logged_in"):
+        flash("Please login as a director first.")
+        return redirect(url_for("director_login"))
+
+    conn = get_db()
+
+    active_year = conn.execute(
+        """
+        SELECT id, year_name
+        FROM academic_years
+        WHERE is_active = 1
+        LIMIT 1
+        """
+    ).fetchone()
+
+    active_year_id = active_year["id"] if active_year else None
+    active_year_name = active_year["year_name"] if active_year else "No Active Year"
+
+    total_students = conn.execute(
+        "SELECT COUNT(*) FROM students WHERE academic_year_id = ?",
+        (active_year_id,)
+    ).fetchone()[0]
+
+    pending_students = conn.execute(
+        """
+        SELECT COUNT(*)
+        FROM students
+        WHERE academic_year_id = ?
+        AND registration_status = 'pending'
+        """,
+        (active_year_id,)
+    ).fetchone()[0]
+
+    passed_students = conn.execute(
+        """
+        SELECT COUNT(*)
+        FROM students
+        WHERE academic_year_id = ?
+        AND registration_status = 'passed'
+        """,
+        (active_year_id,)
+    ).fetchone()[0]
+
+    failed_students = conn.execute(
+        """
+        SELECT COUNT(*)
+        FROM students
+        WHERE academic_year_id = ?
+        AND registration_status = 'failed'
+        """,
+        (active_year_id,)
+    ).fetchone()[0]
+
+    total_teachers = conn.execute(
+        "SELECT COUNT(*) FROM teachers"
+    ).fetchone()[0]
+
+    conn.close()
+
+    return render_template(
+        "director_dashboard.html",
+        total_students=total_students,
+        pending_students=pending_students,
+        passed_students=passed_students,
+        failed_students=failed_students,
+        total_teachers=total_teachers,
+        active_year_name=active_year_name
+    )
+
+
+
+
+@app.route("/director/students")
+def director_students():
+    if not session.get("director_logged_in"):
+        flash("Please login as a director first.")
+        return redirect(url_for("director_login"))
+
+    selected_class = request.args.get("class_name", "").strip()
+
+    allowed_classes = [
+        "9A", "9B", "9C", "9D", "9E", "9F",
+        "10A", "10B", "10C", "10D", "10E", "10F",
+        "11", "12"
+    ]
+
+    conn = get_db()
+
+    if selected_class in allowed_classes:
+        students = conn.execute(
+            """
+            SELECT *
+            FROM students
+            WHERE class_name = ?
+            ORDER BY full_name COLLATE NOCASE ASC
+            """,
+            (selected_class,)
+        ).fetchall()
+    else:
+        selected_class = ""
+        students = conn.execute(
+            """
+            SELECT *
+            FROM students
+            ORDER BY full_name COLLATE NOCASE ASC
+            """
+        ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "director_students.html",
+        students=students,
+        selected_class=selected_class,
+        allowed_classes=allowed_classes
+    )
+
+
+
+@app.route("/director/applications")
+def director_applications():
+    if not session.get("director_logged_in"):
+        flash("Please login as a director first.")
+        return redirect(url_for("director_login"))
+
+    conn = get_db()
+
+    applications = conn.execute(
+        """
+        SELECT *
+        FROM students
+        WHERE registration_status = 'pending'
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "director_applications.html",
+        applications=applications
+    )
+
+
+
+@app.route("/director/teachers", methods=["GET", "POST"])
+def director_teachers():
+    if not session.get("director_logged_in"):
+        flash("Please login as a director first.")
+        return redirect(url_for("director_login"))
+
+    conn = get_db()
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        full_name = request.form.get("full_name", "").strip()
+        password = request.form.get("password", "")
+
+        if not username or not full_name or len(password) < 6:
+            conn.close()
+            flash("Please fill all fields. Password must be at least 6 characters.")
+            return redirect(url_for("director_teachers"))
+
+        try:
+            conn.execute(
+                """
+                INSERT INTO teachers
+                (username, password_hash, full_name)
+                VALUES (?, ?, ?)
+                """,
+                (
+                    username,
+                    generate_password_hash(password),
+                    full_name
+                )
+            )
+            conn.commit()
+            flash("Teacher account created successfully.")
+        except Exception:
+            flash("Username already exists or could not be created.")
+
+        conn.close()
+        return redirect(url_for("director_teachers"))
+
+    teachers = conn.execute(
+        """
+        SELECT id, username, full_name, created_at
+        FROM teachers
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "director_teachers.html",
+        teachers=teachers
+    )
+
+
+
+
+
+
+# =========================================================
+# MONITORING USERS
+# =========================================================
+
+def ensure_monitor_users():
+    conn = get_db()
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS monitor_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            full_name TEXT NOT NULL,
+            role TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    users = [
+        (
+            "nuunnuu",
+            "Nuunnuu@123",
+            "Nuunnuu Ibrahim",
+            "Social Affairs Officer"
+        ),
+        (
+            "haafiz",
+            "Haafiz@123",
+            "Haafiz",
+            "Head of the Limmuu Kossa Woreda Education Office"
+        )
+    ]
+
+    for username, password, full_name, role in users:
+        existing = conn.execute(
+            "SELECT id FROM monitor_users WHERE username = ?",
+            (username,)
+        ).fetchone()
+
+        if existing is None:
+            conn.execute(
+                """
+                INSERT INTO monitor_users
+                (username, password_hash, full_name, role)
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    username,
+                    generate_password_hash(password),
+                    full_name,
+                    role
+                )
+            )
+
+    conn.commit()
+    conn.close()
+
+
+@app.route("/monitoring/login", methods=["GET", "POST"])
+def monitoring_login():
+
+    ensure_monitor_users()
+
+    if request.method == "POST":
+
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        if not username or not password:
+            flash("Please enter your username and password.")
+            return redirect(url_for("monitoring_login"))
+
+        conn = get_db()
+
+        user = conn.execute(
+            """
+            SELECT *
+            FROM monitor_users
+            WHERE username = ?
+            """,
+            (username,)
+        ).fetchone()
+
+        conn.close()
+
+        if user and check_password_hash(
+            user["password_hash"],
+            password
+        ):
+
+            session["monitor_logged_in"] = True
+            session["monitor_user_id"] = user["id"]
+            session["monitor_username"] = user["username"]
+            session["monitor_name"] = user["full_name"]
+            session["monitor_role"] = user["role"]
+
+            return redirect(url_for("monitoring_dashboard"))
+
+        flash("Invalid monitoring username or password.")
+        return redirect(url_for("monitoring_login"))
+
+    return render_template("monitoring_login.html")
+
+
+@app.route("/monitoring/logout")
+def monitoring_logout():
+
+    session.pop("monitor_logged_in", None)
+    session.pop("monitor_user_id", None)
+    session.pop("monitor_username", None)
+    session.pop("monitor_name", None)
+    session.pop("monitor_role", None)
+
+    flash("You have been logged out.")
+    return redirect(url_for("monitoring_login"))
+
+
+@app.route("/monitoring/dashboard")
+def monitoring_dashboard():
+
+    if not session.get("monitor_logged_in"):
+        flash("Please login as a monitoring officer first.")
+        return redirect(url_for("monitoring_login"))
+
+    conn = get_db()
+
+    years = conn.execute(
+        """
+        SELECT id, year_name, is_active
+        FROM academic_years
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    requested_year = request.args.get("year_id", "").strip()
+
+    if requested_year.isdigit():
+        selected_year = conn.execute(
+            """
+            SELECT id, year_name, is_active
+            FROM academic_years
+            WHERE id = ?
+            """,
+            (int(requested_year),)
+        ).fetchone()
+    else:
+        selected_year = conn.execute(
+            """
+            SELECT id, year_name, is_active
+            FROM academic_years
+            WHERE is_active = 1
+            LIMIT 1
+            """
+        ).fetchone()
+
+    if selected_year is None and years:
+        selected_year = years[0]
+
+    if selected_year is None:
+        conn.close()
+        return render_template(
+            "monitoring_dashboard.html",
+            years=[],
+            selected_year=None,
+            targets=None,
+            total_passed=0,
+            total_failed=0,
+            total_pending=0,
+            overall_percentage=0,
+            grade_stats=[],
+            failed_by_class=[],
+            recent_passed=[]
+        )
+
+    year_id = selected_year["id"]
+
+    targets = conn.execute(
+        """
+        SELECT *
+        FROM registration_targets
+        WHERE academic_year_id = ?
+        """,
+        (year_id,)
+    ).fetchone()
+
+    target_map = {
+        9: targets["grade9_target"] if targets else 0,
+        10: targets["grade10_target"] if targets else 0,
+        11: targets["grade11_target"] if targets else 0,
+        12: targets["grade12_target"] if targets else 0
+    }
+
+    total_passed = conn.execute(
+        """
+        SELECT COUNT(*)
+        FROM students
+        WHERE academic_year_id = ?
+        AND registration_status = 'passed'
+        """,
+        (year_id,)
+    ).fetchone()[0]
+
+    total_failed = conn.execute(
+        """
+        SELECT COUNT(*)
+        FROM students
+        WHERE academic_year_id = ?
+        AND registration_status = 'failed'
+        """,
+        (year_id,)
+    ).fetchone()[0]
+
+    total_pending = conn.execute(
+        """
+        SELECT COUNT(*)
+        FROM students
+        WHERE academic_year_id = ?
+        AND registration_status = 'pending'
+        """,
+        (year_id,)
+    ).fetchone()[0]
+
+    total_target = targets["total_students"] if targets else 0
+
+    overall_percentage = (
+        round((total_passed / total_target) * 100, 1)
+        if total_target > 0 else 0
+    )
+
+    grade_stats = []
+
+    for grade in [9, 10, 11, 12]:
+
+        passed = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM students
+            WHERE academic_year_id = ?
+            AND registration_status = 'passed'
+            AND class_name LIKE ?
+            """,
+            (year_id, f"{grade}%")
+        ).fetchone()[0]
+
+        failed = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM students
+            WHERE academic_year_id = ?
+            AND registration_status = 'failed'
+            AND class_name LIKE ?
+            """,
+            (year_id, f"{grade}%")
+        ).fetchone()[0]
+
+        pending = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM students
+            WHERE academic_year_id = ?
+            AND registration_status = 'pending'
+            AND class_name LIKE ?
+            """,
+            (year_id, f"{grade}%")
+        ).fetchone()[0]
+
+        target = target_map[grade]
+
+        percentage = (
+            round((passed / target) * 100, 1)
+            if target > 0 else 0
+        )
+
+        grade_stats.append({
+            "grade": grade,
+            "target": target,
+            "passed": passed,
+            "failed": failed,
+            "pending": pending,
+            "percentage": percentage
+        })
+
+    failed_by_class = conn.execute(
+        """
+        SELECT class_name, COUNT(*) AS failed_count
+        FROM students
+        WHERE academic_year_id = ?
+        AND registration_status = 'failed'
+        GROUP BY class_name
+        ORDER BY class_name ASC
+        """,
+        (year_id,)
+    ).fetchall()
+
+    recent_passed = conn.execute(
+        """
+        SELECT full_name, class_name, reviewed_at
+        FROM students
+        WHERE academic_year_id = ?
+        AND registration_status = 'passed'
+        ORDER BY reviewed_at DESC, id DESC
+        LIMIT 8
+        """,
+        (year_id,)
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "monitoring_dashboard.html",
+        years=years,
+        selected_year=selected_year,
+        targets=targets,
+        total_passed=total_passed,
+        total_failed=total_failed,
+        total_pending=total_pending,
+        overall_percentage=overall_percentage,
+        grade_stats=grade_stats,
+        failed_by_class=failed_by_class,
+        recent_passed=recent_passed
+    )
+
+
+@app.route("/director/registration-targets", methods=["GET", "POST"])
+def director_registration_targets():
+    if not session.get("director_logged_in"):
+        flash("Please login as a director first.")
+        return redirect(url_for("director_login"))
+
+    conn = get_db()
+
+    active_year = conn.execute(
+        """
+        SELECT id, year_name
+        FROM academic_years
+        WHERE is_active = 1
+        LIMIT 1
+        """
+    ).fetchone()
+
+    if active_year is None:
+        conn.close()
+        flash("No active academic year found.")
+        return redirect(url_for("director_dashboard"))
+
+    year_id = active_year["id"]
+
+    target = conn.execute(
+        """
+        SELECT *
+        FROM registration_targets
+        WHERE academic_year_id = ?
+        """,
+        (year_id,)
+    ).fetchone()
+
+    if request.method == "POST":
+        fields = [
+            "total_students",
+            "grade9_target",
+            "grade10_target",
+            "grade11_target",
+            "grade12_target"
+        ]
+
+        values = {}
+
+        for field in fields:
+            raw_value = request.form.get(field, "").strip()
+
+            try:
+                value = int(raw_value)
+            except (TypeError, ValueError):
+                conn.close()
+                flash("Please enter valid whole numbers.")
+                return redirect(url_for("director_registration_targets"))
+
+            if value < 0:
+                conn.close()
+                flash("Target numbers cannot be negative.")
+                return redirect(url_for("director_registration_targets"))
+
+            values[field] = value
+
+        if target:
+            conn.execute(
+                """
+                UPDATE registration_targets
+                SET total_students = ?,
+                    grade9_target = ?,
+                    grade10_target = ?,
+                    grade11_target = ?,
+                    grade12_target = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE academic_year_id = ?
+                """,
+                (
+                    values["total_students"],
+                    values["grade9_target"],
+                    values["grade10_target"],
+                    values["grade11_target"],
+                    values["grade12_target"],
+                    year_id
+                )
+            )
+        else:
+            conn.execute(
+                """
+                INSERT INTO registration_targets
+                (
+                    academic_year_id,
+                    total_students,
+                    grade9_target,
+                    grade10_target,
+                    grade11_target,
+                    grade12_target
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    year_id,
+                    values["total_students"],
+                    values["grade9_target"],
+                    values["grade10_target"],
+                    values["grade11_target"],
+                    values["grade12_target"]
+                )
+            )
+
+        conn.commit()
+
+        target = conn.execute(
+            """
+            SELECT *
+            FROM registration_targets
+            WHERE academic_year_id = ?
+            """,
+            (year_id,)
+        ).fetchone()
+
+        conn.close()
+
+        flash(
+            f"Registration targets for {active_year['year_name']} "
+            "saved successfully."
+        )
+
+        return redirect(url_for("director_registration_targets"))
+
+    conn.close()
+
+    return render_template(
+        "director_registration_targets.html",
+        active_year=active_year,
+        target=target
+    )
+
+
+@app.route("/director/academic-years", methods=["GET", "POST"])
+def director_academic_years():
+    if not session.get("director_logged_in"):
+        flash("Please login as a director first.")
+        return redirect(url_for("director_login"))
+
+    conn = get_db()
+
+    if request.method == "POST":
+        year_name = request.form.get("year_name", "").strip()
+
+        if not year_name:
+            conn.close()
+            flash("Please enter the academic year.")
+            return redirect(url_for("director_academic_years"))
+
+        existing = conn.execute(
+            "SELECT id FROM academic_years WHERE year_name = ?",
+            (year_name,)
+        ).fetchone()
+
+        if existing:
+            conn.execute(
+                "UPDATE academic_years SET is_active = 0"
+            )
+
+            conn.execute(
+                """
+                UPDATE academic_years
+                SET is_active = 1
+                WHERE id = ?
+                """,
+                (existing["id"],)
+            )
+
+            conn.commit()
+            conn.close()
+
+            flash(
+                f"Academic year {year_name} restored and activated."
+            )
+            return redirect(url_for("director_academic_years"))
+
+        conn.execute(
+            "UPDATE academic_years SET is_active = 0"
+        )
+
+        conn.execute(
+            """
+            INSERT INTO academic_years
+            (year_name, is_active)
+            VALUES (?, 1)
+            """,
+            (year_name,)
+        )
+
+        conn.commit()
+        conn.close()
+
+        flash(
+            f"New academic year {year_name} started successfully. "
+            "Previous year has been archived."
+        )
+
+        return redirect(url_for("director_academic_years"))
+
+    active_year = conn.execute(
+        """
+        SELECT *
+        FROM academic_years
+        WHERE is_active = 1
+        LIMIT 1
+        """
+    ).fetchone()
+
+    years = conn.execute(
+        """
+        SELECT
+            ay.*,
+            (
+                SELECT COUNT(*)
+                FROM students s
+                WHERE s.academic_year_id = ay.id
+            ) AS student_count
+        FROM academic_years ay
+        ORDER BY ay.id DESC
+        """
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "director_academic_years.html",
+        years=years,
+        active_year=active_year
+    )
+
+
+@app.route("/director/academic-years/<int:year_id>/restore", methods=["POST"])
+def director_restore_academic_year(year_id):
+    if not session.get("director_logged_in"):
+        flash("Please login as a director first.")
+        return redirect(url_for("director_login"))
+
+    conn = get_db()
+
+    year = conn.execute(
+        """
+        SELECT *
+        FROM academic_years
+        WHERE id = ?
+        """,
+        (year_id,)
+    ).fetchone()
+
+    if year is None:
+        conn.close()
+        flash("Academic year not found.")
+        return redirect(url_for("director_academic_years"))
+
+    conn.execute(
+        "UPDATE academic_years SET is_active = 0"
+    )
+
+    conn.execute(
+        """
+        UPDATE academic_years
+        SET is_active = 1
+        WHERE id = ?
+        """,
+        (year_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    flash(
+        f"Academic year {year['year_name']} restored successfully."
+    )
+
+    return redirect(url_for("director_academic_years"))
+
+
+@app.route("/director/restore-data", methods=["GET", "POST"])
+def director_restore_data():
+    if not session.get("director_logged_in"):
+        flash("Please login as a director first.")
+        return redirect(url_for("director_login"))
+
+    import shutil
+    from datetime import datetime
+
+    os.makedirs("backups", exist_ok=True)
+
+    if request.method == "POST":
+        action = request.form.get("action", "")
+
+        if action == "backup":
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"school_backup_{timestamp}.db"
+            backup_path = os.path.join("backups", filename)
+
+            source = sqlite3.connect(DATABASE)
+            destination = sqlite3.connect(backup_path)
+
+            source.backup(destination)
+
+            destination.close()
+            source.close()
+
+            conn = get_db()
+            conn.execute(
+                """
+                INSERT INTO system_backups (filename)
+                VALUES (?)
+                """,
+                (filename,)
+            )
+            conn.commit()
+            conn.close()
+
+            flash("Database backup created successfully.")
+
+        elif action == "restore":
+            filename = request.form.get("filename", "").strip()
+
+            if filename:
+                backup_path = os.path.join("backups", filename)
+
+                if os.path.isfile(backup_path):
+                    source = sqlite3.connect(backup_path)
+                    destination = sqlite3.connect(DATABASE)
+
+                    source.backup(destination)
+
+                    destination.close()
+                    source.close()
+
+                    flash("Database restored successfully.")
+                else:
+                    flash("Backup file not found.")
+
+        return redirect(url_for("director_restore_data"))
+
+    conn = get_db()
+
+    backups = conn.execute(
+        """
+        SELECT *
+        FROM system_backups
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "director_restore.html",
+        backups=backups
+    )
+
+
+
+@app.route("/director/settings", methods=["GET", "POST"])
+def director_settings():
+    if not session.get("director_logged_in"):
+        flash("Please login as a director first.")
+        return redirect(url_for("director_login"))
+
+    if request.method == "POST":
+        full_name = request.form.get("full_name", "").strip()
+
+        if full_name:
+            conn = get_db()
+            conn.execute(
+                """
+                UPDATE directors
+                SET full_name = ?
+                WHERE id = ?
+                """,
+                (full_name, session.get("director_id"))
+            )
+            conn.commit()
+            conn.close()
+
+            session["director_name"] = full_name
+            flash("Director information updated successfully.")
+
+        return redirect(url_for("director_settings"))
+
+    conn = get_db()
+
+    director = conn.execute(
+        """
+        SELECT *
+        FROM directors
+        WHERE id = ?
+        """,
+        (session.get("director_id"),)
+    ).fetchone()
+
+    conn.close()
+
+    return render_template(
+        "director_settings.html",
+        director=director
+    )
+
+
+
+@app.route("/director/logout")
+def director_logout():
+    session.pop("director_id", None)
+    session.pop("director_username", None)
+    session.pop("director_name", None)
+    session.pop("director_logged_in", None)
+
+    flash("You have been logged out.")
+    return redirect(url_for("login"))
+
+@app.route("/student/dashboard")
+def student_dashboard():
+    if not session.get("student_logged_in"):
+        flash("Please login as a student first.")
+        return redirect(url_for("student_login"))
+
+    student_id = session.get("student_id")
+
+    conn = get_db()
+    student = conn.execute(
+        "SELECT * FROM students WHERE id = ?",
+        (student_id,)
+    ).fetchone()
+
+    unread_notifications = conn.execute(
+        """
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE student_id = ? AND is_read = 0
+        """,
+        (student_id,)
+    ).fetchone()[0]
+
+    conn.close()
+
+    if student is None:
+        session.pop("student_id", None)
+        session.pop("student_logged_in", None)
+        flash("Student account not found.")
+        return redirect(url_for("student_login"))
+
+    return render_template(
+        "student_dashboard.html",
+        student=student,
+        unread_notifications=unread_notifications
+    )
+
+
+@app.route("/student/notifications")
+def student_notifications():
+    if not session.get("student_logged_in"):
+        flash("Please login as a student first.")
+        return redirect(url_for("student_login"))
+
+    student_id = session.get("student_id")
+
+    conn = get_db()
+    notifications = conn.execute(
+        """
+        SELECT id, message, is_read, created_at
+        FROM notifications
+        WHERE student_id = ?
+        ORDER BY created_at DESC, id DESC
+        """,
+        (student_id,)
+    ).fetchall()
+    conn.close()
+
+    return render_template(
+        "student_notifications.html",
+        notifications=notifications
+    )
+
+
+@app.route("/student/logout")
+def student_logout():
+    session.pop("student_id", None)
+    session.pop("student_logged_in", None)
+    flash("You have been logged out.")
+    return redirect(url_for("login"))
+
+
+@app.route("/teacher/logout")
+def teacher_logout():
+
+    session.pop("teacher_id", None)
+    session.pop("teacher_username", None)
+    session.pop("teacher_name", None)
+    session.pop("teacher_logged_in", None)
+
+    flash("You have been logged out.")
+
+    return redirect(url_for("teacher_login"))
+
+
+
+
+if __name__ == "__main__":
+    init_db()
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000)),
+        debug=False
+    )
+

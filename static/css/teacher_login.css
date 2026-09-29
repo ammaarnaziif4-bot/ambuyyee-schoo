@@ -1,0 +1,157 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top right, #173b70 0%, transparent 35%),
+        linear-gradient(135deg, #06152d, #0b2345);
+    color: #ffffff;
+}
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 430px;
+    padding: 42px 36px;
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: 24px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
+    text-align: center;
+}
+
+.school-logo {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #c99a3d, #8f6822);
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 800;
+    box-shadow: 0 10px 25px rgba(143, 104, 34, 0.25);
+}
+
+.login-card h1 {
+    color: #071b3a;
+    font-size: 24px;
+    letter-spacing: 0.5px;
+}
+
+.login-subtitle {
+    margin-top: 8px;
+    margin-bottom: 32px;
+    color: #777f8d;
+    font-size: 14px;
+}
+
+.form-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #26364d;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 14px 15px;
+    border: 1px solid #d9dfe8;
+    border-radius: 12px;
+    outline: none;
+    background: #f8fafc;
+    color: #17253a;
+    font-size: 14px;
+    transition: 0.2s ease;
+}
+
+.form-group input:focus {
+    border-color: #b18332;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(177, 131, 50, 0.10);
+}
+
+.login-card button {
+    width: 100%;
+    margin-top: 5px;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #b18332, #8f6822);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.login-card button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px rgba(143, 104, 34, 0.25);
+}
+
+.flash-messages {
+    margin-top: 20px;
+}
+
+.flash-message {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #fff0f0;
+    border: 1px solid #f0c5c5;
+    color: #a32929;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.back-home {
+    display: inline-block;
+    margin-top: 25px;
+    color: #6d7480;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.back-home:hover {
+    color: #9b7228;
+}
+
+@media (max-width: 480px) {
+
+    .login-page {
+        padding: 16px;
+    }
+
+    .login-card {
+        padding: 34px 22px;
+        border-radius: 20px;
+    }
+
+    .login-card h1 {
+        font-size: 21px;
+    }
+
+    .school-logo {
+        width: 64px;
+        height: 64px;
+    }
+}

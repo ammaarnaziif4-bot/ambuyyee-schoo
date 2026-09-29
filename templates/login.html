@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AMBUYEE SCHOOL</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+
+<body>
+
+<div class="login-page">
+
+    <div class="background-image"></div>
+    <div class="background-overlay"></div>
+
+    <div class="gold-curve curve-top"></div>
+    <div class="gold-curve curve-bottom"></div>
+
+    <main class="login-wrapper">
+
+        <header class="school-header">
+
+            <div class="school-logo">
+                <div class="logo-shield">
+                    <span class="book">▰</span>
+                </div>
+            </div>
+
+            <h1>AMBUYEE SCHOOL</h1>
+
+            <p>Learn Today, Lead Tomorrow</p>
+
+            <div class="gold-line"></div>
+
+        </header>
+
+
+        <section class="login-panel">
+
+            <div class="panel-heading">
+                <div class="small-gold-line"></div>
+
+                <h2>Choose Your Login Type</h2>
+
+                <p>Select your account to continue</p>
+            </div>
+
+
+            <div class="login-options">
+
+                <!-- STUDENT -->
+                <a href="/student/login" class="login-option">
+
+                    <div class="option-icon">
+                        <svg viewBox="0 0 64 64" aria-hidden="true">
+                            <path d="M8 24L32 12l24 12-24 12L8 24z"/>
+                            <path d="M18 31v12c8 6 20 6 28 0V31"/>
+                            <path d="M56 25v14"/>
+                        </svg>
+                    </div>
+
+                    <h3>Student</h3>
+                    <span>Student Login</span>
+
+                    <div class="arrow-button">→</div>
+
+                </a>
+
+
+                <!-- TEACHER -->
+                <a href="{{ url_for('teacher_login') }}"
+                   class="login-option">
+
+                    <div class="option-icon">
+                        <svg viewBox="0 0 64 64" aria-hidden="true">
+                            <circle cx="32" cy="22" r="10"/>
+                            <path d="M13 52c2-12 10-18 19-18s17 6 19 18"/>
+                        </svg>
+                    </div>
+
+                    <h3>Teacher</h3>
+                    <span>Teacher Login</span>
+
+                    <div class="arrow-button">→</div>
+
+                </a>
+
+
+                <!-- DIRECTOR -->
+                <a href="/director/login" class="login-option">
+
+                    <div class="option-icon">
+                        <svg viewBox="0 0 64 64" aria-hidden="true">
+                            <path d="M32 8l21 8v15c0 13-9 22-21 27C20 53 11 44 11 31V16l21-8z"/>
+                            <path d="M32 21v18"/>
+                            <path d="M23 30h18"/>
+                        </svg>
+                    </div>
+
+                    <h3>Director</h3>
+                    <span>Director Login</span>
+
+                    <div class="arrow-button">→</div>
+
+                </a>
+
+            </div>
+
+
+            <div class="register-area">
+
+                <span>Don't have an account?</span>
+
+                <a href="{{ url_for('register') }}">
+                    Register Here
+                    <strong>→</strong>
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <footer class="login-footer">
+            © 2026 AMBUYEE SCHOOL. All rights reserved.
+        </footer>
+
+    </main>
+
+</div>
+
+</body>
+</html>

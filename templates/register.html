@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration | AMBUYEE SCHOOL</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/register.css') }}">
+</head>
+
+<body>
+
+<header class="topbar">
+    <a href="/" class="brand">
+        <div class="brand-logo">A</div>
+        <div>
+            <strong>AMBUYEE</strong>
+            <span>SCHOOL</span>
+        </div>
+    </a>
+
+    <a href="/" class="back-link">← Back to Home</a>
+</header>
+
+
+<main class="registration-page">
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+                <div class="flash-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+    <section class="registration-header">
+        <div class="eyebrow">STUDENT ADMISSION</div>
+
+        <h1>Student Registration</h1>
+
+        <p>
+            Complete the form below to submit your registration
+            application to Ambuyyee School.
+        </p>
+    </section>
+
+
+    <div class="steps">
+
+        <div class="step active">
+            <div class="step-number">1</div>
+            <div>
+                <strong>Personal</strong>
+                <span>Information</span>
+            </div>
+        </div>
+
+        <div class="step-line"></div>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <div>
+                <strong>School</strong>
+                <span>Information</span>
+            </div>
+        </div>
+
+        <div class="step-line"></div>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <div>
+                <strong>Documents</strong>
+                <span>Upload</span>
+            </div>
+        </div>
+
+        <div class="step-line"></div>
+
+        <div class="step">
+            <div class="step-number">4</div>
+            <div>
+                <strong>Submit</strong>
+                <span>Application</span>
+            </div>
+        </div>
+
+    </div>
+
+
+    <form action="/register" method="POST"
+          enctype="multipart/form-data"
+          class="registration-form">
+
+
+        <!-- PERSONAL INFORMATION -->
+
+        <section class="form-card">
+
+            <div class="card-title">
+                <div class="title-icon">01</div>
+
+                <div>
+                    <h2>Personal Information</h2>
+                    <p>Enter the student's basic information.</p>
+                </div>
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="field full">
+                    <label>Full Name <span>*</span></label>
+
+                    <input
+                        type="text"
+                        name="full_name"
+                        placeholder="Enter student's full name"
+                        required>
+                </div>
+
+
+                <div class="field">
+                    <label>National ID <span>*</span></label>
+
+                    <input
+                        type="text"
+                        name="national_id"
+                        placeholder="Enter National ID"
+                        required>
+                </div>
+
+
+                <div class="field">
+                    <label>Ganda <span>*</span></label>
+
+                    <input
+                        type="text"
+                        name="ganda"
+                        placeholder="Enter Ganda"
+                        required>
+                </div>
+
+
+                <div class="field">
+                    <label>Password <span>*</span></label>
+
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Create a password"
+                        minlength="6"
+                        required>
+                </div>
+
+
+                <div class="field">
+                    <label>Confirm Password <span>*</span></label>
+
+                    <input
+                        type="password"
+                        name="confirm_password"
+                        placeholder="Confirm password"
+                        minlength="6"
+                        required>
+                </div>
+
+
+                <div class="field">
+                    <label>Age <span>*</span></label>
+
+                    <input
+                        type="number"
+                        name="age"
+                        min="1"
+                        max="100"
+                        placeholder="Enter age"
+                        required>
+                </div>
+
+
+                <div class="field">
+                    <label>Birth Date <span>*</span></label>
+
+                    <input
+                        type="date"
+                        name="birth_date"
+                        required>
+                </div>
+
+
+                <div class="field">
+                    <label>Sex <span>*</span></label>
+
+                    <select name="sex" required>
+                        <option value="">Select sex</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- SCHOOL INFORMATION -->
+
+        <section class="form-card">
+
+            <div class="card-title">
+                <div class="title-icon">02</div>
+
+                <div>
+                    <h2>School Information</h2>
+                    <p>Select the grade and class information.</p>
+                </div>
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label>Grade <span>*</span></label>
+
+                    <select name="class_name" id="grade" required>
+
+                        <option value="">Select Grade</option>
+
+                        <option value="9A">Grade 9A</option>
+                        <option value="9B">Grade 9B</option>
+                        <option value="9C">Grade 9C</option>
+                        <option value="9D">Grade 9D</option>
+                        <option value="9E">Grade 9E</option>
+                        <option value="9F">Grade 9F</option>
+
+                        <option value="10A">Grade 10A</option>
+                        <option value="10B">Grade 10B</option>
+                        <option value="10C">Grade 10C</option>
+                        <option value="10D">Grade 10D</option>
+                        <option value="10E">Grade 10E</option>
+                        <option value="10F">Grade 10F</option>
+
+                        <option value="11">Grade 11</option>
+                        <option value="12">Grade 12</option>
+
+                    </select>
+                </div>
+
+
+                <div class="field stream-field" id="streamField">
+
+                    <label>Stream</label>
+
+                    <select name="stream">
+
+                        <option value="">Select Stream</option>
+
+                        <option value="Natural Science">
+                            Natural Science
+                        </option>
+
+                        <option value="Social Science">
+                            Social Science
+                        </option>
+
+                    </select>
+
+                    <small>
+                        Required for Grade 11 and Grade 12.
+                    </small>
+
+                    </div> 
+
+                    </div>
+ 
+                   <!-- GRADE 9 PAYMENT -->
+
+<div class="payment-section" id="paymentSection">
+
+    <div class="payment-header">
+
+        <div class="payment-icon">₿</div>
+
+        <div>
+            <h3>Registration Payment</h3>
+
+            <p>
+                Grade 9 registration requires a payment of
+                <strong>500 Birr</strong>.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="payment-amount">
+
+        <span>Registration Fee</span>
+
+        <strong>500 ETB</strong>
+
+    </div>
+
+    <div class="form-grid">
+
+        <div class="field">
+
+            <label>
+                Payment Reference / Receipt Number
+                <span>*</span>
+            </label>
+
+            <input
+                type="text"
+                name="payment_reference"
+                id="paymentReference"
+                placeholder="Enter payment reference number">
+
+        </div>
+
+        <div class="field">
+
+            <label>
+                Payment Receipt
+                <span>*</span>
+            </label>
+
+            <input
+                type="file"
+                name="payment_receipt"
+                id="paymentReceipt"
+                accept="image/*,.pdf">
+
+        </div>
+
+    </div>
+
+    <div class="payment-help">
+
+        <span>ⓘ</span>
+
+        <p>
+            Upload a clear photo or PDF of your payment receipt.
+            The school will verify the payment during review.
+        </p>
+
+    </div>
+
+</div>
+
+</section>
+
+        <!-- DOCUMENTS -->
+
+        <section class="form-card">
+
+            <div class="card-title">
+                <div class="title-icon">03</div>
+
+                <div>
+                    <h2>Required Documents</h2>
+                    <p>Upload clear and readable documents.</p>
+                </div>
+            </div>
+
+
+            <div class="upload-grid">
+
+                <label class="upload-box">
+
+                    <input
+                        type="file"
+                        name="student_photo"
+                        accept="image/*">
+
+                    <div class="upload-icon">📷</div>
+
+                    <strong>Student Photo</strong>
+
+                    <span>
+                        Upload a clear photo
+                    </span>
+
+                </label>
+
+
+                <label class="upload-box">
+
+                    <input
+                        type="file"
+                        name="id_front"
+                        accept="image/*">
+
+                    <div class="upload-icon">🪪</div>
+
+                    <strong>ID Card Front</strong>
+
+                    <span>
+                        Front side of ID card
+                    </span>
+
+                </label>
+
+
+                <label class="upload-box">
+
+                    <input
+                        type="file"
+                        name="id_back"
+                        accept="image/*">
+
+                    <div class="upload-icon">🪪</div>
+
+                    <strong>ID Card Back</strong>
+
+                    <span>
+                        Back side of ID card
+                    </span>
+
+                </label>
+
+            </div>
+
+        </section>
+
+
+        <!-- SUBMIT -->
+
+        <section class="submit-card">
+
+            <div class="secure-note">
+
+                <div class="secure-icon">✓</div>
+
+                <div>
+                    <strong>Your information is protected</strong>
+
+                    <p>
+                        Please check all information before submitting
+                        your application.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <button type="submit" class="submit-button">
+                Submit Registration
+                <span>→</span>
+            </button>
+
+        </section>
+
+    </form>
+
+</main>
+
+
+<footer>
+    <strong>AMBUYEE SCHOOL</strong>
+    <span>© 2026 All rights reserved.</span>
+</footer>
+
+
+<script>
+
+const grade = document.getElementById("grade");
+
+const streamField =
+    document.getElementById("streamField");
+
+const stream =
+    streamField.querySelector("select");
+
+const paymentSection =
+    document.getElementById("paymentSection");
+
+const paymentReference =
+    document.getElementById("paymentReference");
+
+const paymentReceipt =
+    document.getElementById("paymentReceipt");
+
+
+function checkGradeRequirements() {
+
+    const value = grade.value;
+
+
+    /* GRADE 11 & 12 STREAM */
+
+    if (value === "11" || value === "12") {
+
+        streamField.classList.add("show");
+
+        stream.required = true;
+
+    } else {
+
+        streamField.classList.remove("show");
+
+        stream.required = false;
+
+        stream.value = "";
+
+    }
+
+
+    /* GRADE 9 PAYMENT */
+
+    if (
+        value === "9A" ||
+        value === "9B" ||
+        value === "9C" ||
+        value === "9D" ||
+        value === "9E" ||
+        value === "9F"
+    ) {
+
+        paymentSection.classList.add("show");
+
+        paymentReference.required = true;
+
+        paymentReceipt.required = true;
+
+    } else {
+
+        paymentSection.classList.remove("show");
+
+        paymentReference.required = false;
+
+        paymentReceipt.required = false;
+
+        paymentReference.value = "";
+
+        paymentReceipt.value = "";
+
+    }
+
+}
+
+
+grade.addEventListener(
+    "change",
+    checkGradeRequirements
+);
+
+
+checkGradeRequirements();
+
+</script>
+
+</body>
+</html>
