@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import sqlite3
+import psycopg
 import os
 from werkzeug.utils import secure_filename
 
