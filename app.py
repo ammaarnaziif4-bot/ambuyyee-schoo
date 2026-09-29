@@ -18,14 +18,80 @@ IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 PAYMENT_RECEIPT_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "pdf"}
 
 
+class HybridRow(dict):
+    def __init__(self, columns, values):
+        super().__init__(zip(columns, values))
+        self._values = tuple(values)
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._values[key]
+        return super().__getitem__(key)
+
+    def __iter__(self):
+        return super().__iter__()
+
+
+def hybrid_row_factory(cursor):
+    columns = [column.name for column in cursor.description]
+    return lambda values: HybridRow(columns, values)
+
+
 def get_db():
-    conn = sqlite3.connect(
+    database_url = os.environ.get("DATABASE_URL")
+
+    if database_url:
+        return psycopg.connect(
+            database_url,
+            row_factory=hybrid_row_factory
+        )
+
+    sqlite_conn = sqlite3.connect(
         DATABASE,
         timeout=30
     )
-    conn.row_factory = sqlite3.Row
-    return conn
+    sqlite_conn.row_factory = sqlite3.Row
 
+    class SQLiteCompatConnection:
+        def __init__(self, connection):
+            self._connection = connection
+
+        def execute(self, sql, params=()):
+            return self._connection.execute(
+                sql.replace("%s", "?"),
+                params
+            )
+
+        def executemany(self, sql, params):
+            return self._connection.executemany(
+                sql.replace("%s", "?"),
+                params
+            )
+
+        def executescript(self, script):
+            return self._connection.executescript(script)
+
+        def commit(self):
+            return self._connection.commit()
+
+        def rollback(self):
+            return self._connection.rollback()
+
+        def close(self):
+            return self._connection.close()
+
+        def __enter__(self):
+            self._connection.__enter__()
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return self._connection.__exit__(
+                exc_type,
+                exc_value,
+                traceback
+            )
+
+    return SQLiteCompatConnection(sqlite_conn)
 
 def allowed_file(filename, allowed_extensions):
     return (
@@ -36,9 +102,18 @@ def allowed_file(filename, allowed_extensions):
 
 def ensure_column(conn, column_name, column_definition):
 
-    columns = conn.execute(
-        "PRAGMA table_info(students)"
-    ).fetchall()
+    if os.environ.get("DATABASE_URL"):
+        columns = conn.execute(
+            """
+            SELECT column_name AS name
+            FROM information_schema.columns
+            WHERE table_name = 'students'
+            """
+        ).fetchall()
+    else:
+        columns = conn.execute(
+            "PRAGMA table_info(students)"
+        ).fetchall()
 
     existing_columns = [
         column["name"] for column in columns
@@ -61,7 +136,7 @@ def init_db():
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS teachers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
             full_name TEXT NOT NULL,
@@ -71,7 +146,7 @@ def init_db():
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS directors (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
             full_name TEXT NOT NULL,
@@ -81,7 +156,7 @@ def init_db():
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             full_name TEXT NOT NULL,
             sex TEXT NOT NULL,
             age INTEGER NOT NULL,
@@ -123,7 +198,7 @@ def init_db():
 
     # Create default director account if none exists
     director = conn.execute(
-        "SELECT id FROM directors WHERE username = ?",
+        "SELECT id FROM directors WHERE username = %s",
         ("director",)
     ).fetchone()
 
@@ -132,7 +207,7 @@ def init_db():
             """
             INSERT INTO directors
             (username, password_hash, full_name)
-            VALUES (?, ?, ?)
+            VALUES (%s, %s, %s)
             """,
             (
                 "director",
@@ -144,7 +219,7 @@ def init_db():
     # Academic years
     conn.execute("""
         CREATE TABLE IF NOT EXISTS academic_years (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             year_name TEXT NOT NULL UNIQUE,
             is_active INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -154,7 +229,7 @@ def init_db():
     # Database backup records
     conn.execute("""
         CREATE TABLE IF NOT EXISTS registration_targets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             academic_year_id INTEGER NOT NULL UNIQUE,
             total_students INTEGER NOT NULL DEFAULT 0,
             grade9_target INTEGER NOT NULL DEFAULT 0,
@@ -168,7 +243,7 @@ def init_db():
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS system_backups (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             filename TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -189,7 +264,7 @@ def init_db():
 
         if existing_year:
             conn.execute(
-                "UPDATE academic_years SET is_active = 1 WHERE id = ?",
+                "UPDATE academic_years SET is_active = 1 WHERE id = %s",
                 (existing_year["id"],)
             )
         else:
@@ -197,16 +272,17 @@ def init_db():
                 """
                 INSERT INTO academic_years
                 (year_name, is_active)
-                VALUES (?, 1)
+                VALUES (%s, 1)
+                RETURNING id
                 """,
                 ("2026/2027",)
             )
-            year_id = cursor.lastrowid
+            year_id = cursor.fetchone()["id"]
 
             conn.execute(
                 """
                 UPDATE students
-                SET academic_year_id = ?
+                SET academic_year_id = %s
                 WHERE academic_year_id IS NULL
                 """,
                 (year_id,)
@@ -251,7 +327,7 @@ def home():
             """
             SELECT total_students
             FROM registration_targets
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             """,
             (year_id,)
         ).fetchone()
@@ -263,7 +339,7 @@ def home():
             """
             SELECT COUNT(*)
             FROM students
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             AND registration_status IN ('passed', 'failed')
             """,
             (year_id,)
@@ -273,7 +349,7 @@ def home():
             """
             SELECT COUNT(*)
             FROM students
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             AND registration_status = 'passed'
             """,
             (year_id,)
@@ -293,9 +369,9 @@ def home():
                 """
                 SELECT COUNT(*)
                 FROM students
-                WHERE academic_year_id = ?
+                WHERE academic_year_id = %s
                 AND registration_status IN ('passed', 'failed')
-                AND class_name LIKE ?
+                AND class_name LIKE %s
                 """,
                 (year_id, f"{grade}%")
             ).fetchone()[0]
@@ -304,9 +380,9 @@ def home():
                 """
                 SELECT COUNT(*)
                 FROM students
-                WHERE academic_year_id = ?
+                WHERE academic_year_id = %s
                 AND registration_status = 'passed'
-                AND class_name LIKE ?
+                AND class_name LIKE %s
                 """,
                 (year_id, f"{grade}%")
             ).fetchone()[0]
@@ -340,7 +416,7 @@ def home():
                     END
                 ) AS approved
             FROM students
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             AND registration_status IN ('passed', 'failed')
             AND class_name IS NOT NULL
             AND TRIM(class_name) != ''
@@ -788,8 +864,8 @@ def register():
                 )
                 VALUES
                 (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
             """, (
 
@@ -830,7 +906,7 @@ def register():
             )
 
 
-        except sqlite3.IntegrityError:
+        except psycopg.IntegrityError:
 
             flash(
                 "This National ID is already registered."
@@ -878,7 +954,7 @@ def director_login():
 
         conn = get_db()
         director = conn.execute(
-            "SELECT * FROM directors WHERE username = ?",
+            "SELECT * FROM directors WHERE username = %s",
             (username,)
         ).fetchone()
         conn.close()
@@ -911,7 +987,7 @@ def student_login():
 
         conn = get_db()
         student = conn.execute(
-            "SELECT * FROM students WHERE national_id = ?",
+            "SELECT * FROM students WHERE national_id = %s",
             (national_id,)
         ).fetchone()
         conn.close()
@@ -948,7 +1024,7 @@ def teacher_login():
             """
             SELECT *
             FROM teachers
-            WHERE username = ?
+            WHERE username = %s
             """,
             (username,)
         ).fetchone()
@@ -1000,7 +1076,7 @@ def teacher_dashboard():
             """
             SELECT COUNT(*)
             FROM students
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             """,
             (active_year_id,)
         ).fetchone()[0]
@@ -1009,7 +1085,7 @@ def teacher_dashboard():
             """
             SELECT COUNT(*)
             FROM students
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             AND registration_status = 'pending'
             """,
             (active_year_id,)
@@ -1019,7 +1095,7 @@ def teacher_dashboard():
             """
             SELECT COUNT(*)
             FROM students
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             AND registration_status = 'passed'
             """
         , (active_year_id,)).fetchone()[0]
@@ -1028,7 +1104,7 @@ def teacher_dashboard():
             """
             SELECT COUNT(*)
             FROM students
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             AND registration_status = 'failed'
             """,
             (active_year_id,)
@@ -1097,8 +1173,8 @@ def teacher_students():
             SELECT id, full_name, national_id, ganda,
                    class_name, stream, registration_status
             FROM students
-            WHERE academic_year_id = ?
-              AND class_name = ?
+            WHERE academic_year_id = %s
+              AND class_name = %s
             ORDER BY full_name COLLATE NOCASE ASC
             """,
             (active_year_id, selected_class)
@@ -1110,7 +1186,7 @@ def teacher_students():
             SELECT id, full_name, national_id, ganda,
                    class_name, stream, registration_status
             FROM students
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             ORDER BY full_name COLLATE NOCASE ASC
             """,
             (active_year_id,)
@@ -1160,7 +1236,7 @@ def teacher_students_pdf():
         """
         SELECT full_name, national_id, class_name, stream
         FROM students
-        WHERE class_name = ?
+        WHERE class_name = %s
         ORDER BY full_name COLLATE NOCASE ASC
         """,
         (selected_class,)
@@ -1286,7 +1362,7 @@ def teacher_student_details(student_id):
         """
         SELECT *
         FROM students
-        WHERE id = ?
+        WHERE id = %s
         """,
         (student_id,)
     ).fetchone()
@@ -1322,7 +1398,7 @@ def teacher_review_student(student_id):
     conn = get_db()
 
     student = conn.execute(
-        "SELECT id FROM students WHERE id = ?",
+        "SELECT id FROM students WHERE id = %s",
         (student_id,)
     ).fetchone()
 
@@ -1334,10 +1410,10 @@ def teacher_review_student(student_id):
     conn.execute(
         """
         UPDATE students
-        SET registration_status = ?,
-            teacher_message = ?,
+        SET registration_status = %s,
+            teacher_message = %s,
             reviewed_at = CURRENT_TIMESTAMP
-        WHERE id = ?
+        WHERE id = %s
         """,
         (status, teacher_message, student_id)
     )
@@ -1347,7 +1423,7 @@ def teacher_review_student(student_id):
             """
             INSERT INTO notifications
             (student_id, message, is_read)
-            VALUES (?, ?, 0)
+            VALUES (%s, %s, 0)
             """,
             (student_id, teacher_message)
         )
@@ -1382,7 +1458,7 @@ def director_dashboard():
     active_year_name = active_year["year_name"] if active_year else "No Active Year"
 
     total_students = conn.execute(
-        "SELECT COUNT(*) FROM students WHERE academic_year_id = ?",
+        "SELECT COUNT(*) FROM students WHERE academic_year_id = %s",
         (active_year_id,)
     ).fetchone()[0]
 
@@ -1390,7 +1466,7 @@ def director_dashboard():
         """
         SELECT COUNT(*)
         FROM students
-        WHERE academic_year_id = ?
+        WHERE academic_year_id = %s
         AND registration_status = 'pending'
         """,
         (active_year_id,)
@@ -1400,7 +1476,7 @@ def director_dashboard():
         """
         SELECT COUNT(*)
         FROM students
-        WHERE academic_year_id = ?
+        WHERE academic_year_id = %s
         AND registration_status = 'passed'
         """,
         (active_year_id,)
@@ -1410,7 +1486,7 @@ def director_dashboard():
         """
         SELECT COUNT(*)
         FROM students
-        WHERE academic_year_id = ?
+        WHERE academic_year_id = %s
         AND registration_status = 'failed'
         """,
         (active_year_id,)
@@ -1456,7 +1532,7 @@ def director_students():
             """
             SELECT *
             FROM students
-            WHERE class_name = ?
+            WHERE class_name = %s
             ORDER BY full_name COLLATE NOCASE ASC
             """,
             (selected_class,)
@@ -1531,7 +1607,7 @@ def director_teachers():
                 """
                 INSERT INTO teachers
                 (username, password_hash, full_name)
-                VALUES (?, ?, ?)
+                VALUES (%s, %s, %s)
                 """,
                 (
                     username,
@@ -1576,7 +1652,7 @@ def ensure_monitor_users():
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS monitor_users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
             full_name TEXT NOT NULL,
@@ -1602,7 +1678,7 @@ def ensure_monitor_users():
 
     for username, password, full_name, role in users:
         existing = conn.execute(
-            "SELECT id FROM monitor_users WHERE username = ?",
+            "SELECT id FROM monitor_users WHERE username = %s",
             (username,)
         ).fetchone()
 
@@ -1611,7 +1687,7 @@ def ensure_monitor_users():
                 """
                 INSERT INTO monitor_users
                 (username, password_hash, full_name, role)
-                VALUES (?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s)
                 """,
                 (
                     username,
@@ -1645,7 +1721,7 @@ def monitoring_login():
             """
             SELECT *
             FROM monitor_users
-            WHERE username = ?
+            WHERE username = %s
             """,
             (username,)
         ).fetchone()
@@ -1708,7 +1784,7 @@ def monitoring_dashboard():
             """
             SELECT id, year_name, is_active
             FROM academic_years
-            WHERE id = ?
+            WHERE id = %s
             """,
             (int(requested_year),)
         ).fetchone()
@@ -1747,7 +1823,7 @@ def monitoring_dashboard():
         """
         SELECT *
         FROM registration_targets
-        WHERE academic_year_id = ?
+        WHERE academic_year_id = %s
         """,
         (year_id,)
     ).fetchone()
@@ -1763,7 +1839,7 @@ def monitoring_dashboard():
         """
         SELECT COUNT(*)
         FROM students
-        WHERE academic_year_id = ?
+        WHERE academic_year_id = %s
         AND registration_status = 'passed'
         """,
         (year_id,)
@@ -1773,7 +1849,7 @@ def monitoring_dashboard():
         """
         SELECT COUNT(*)
         FROM students
-        WHERE academic_year_id = ?
+        WHERE academic_year_id = %s
         AND registration_status = 'failed'
         """,
         (year_id,)
@@ -1783,7 +1859,7 @@ def monitoring_dashboard():
         """
         SELECT COUNT(*)
         FROM students
-        WHERE academic_year_id = ?
+        WHERE academic_year_id = %s
         AND registration_status = 'pending'
         """,
         (year_id,)
@@ -1804,9 +1880,9 @@ def monitoring_dashboard():
             """
             SELECT COUNT(*)
             FROM students
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             AND registration_status = 'passed'
-            AND class_name LIKE ?
+            AND class_name LIKE %s
             """,
             (year_id, f"{grade}%")
         ).fetchone()[0]
@@ -1815,9 +1891,9 @@ def monitoring_dashboard():
             """
             SELECT COUNT(*)
             FROM students
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             AND registration_status = 'failed'
-            AND class_name LIKE ?
+            AND class_name LIKE %s
             """,
             (year_id, f"{grade}%")
         ).fetchone()[0]
@@ -1826,9 +1902,9 @@ def monitoring_dashboard():
             """
             SELECT COUNT(*)
             FROM students
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             AND registration_status = 'pending'
-            AND class_name LIKE ?
+            AND class_name LIKE %s
             """,
             (year_id, f"{grade}%")
         ).fetchone()[0]
@@ -1853,7 +1929,7 @@ def monitoring_dashboard():
         """
         SELECT class_name, COUNT(*) AS failed_count
         FROM students
-        WHERE academic_year_id = ?
+        WHERE academic_year_id = %s
         AND registration_status = 'failed'
         GROUP BY class_name
         ORDER BY class_name ASC
@@ -1865,7 +1941,7 @@ def monitoring_dashboard():
         """
         SELECT full_name, class_name, reviewed_at
         FROM students
-        WHERE academic_year_id = ?
+        WHERE academic_year_id = %s
         AND registration_status = 'passed'
         ORDER BY reviewed_at DESC, id DESC
         LIMIT 8
@@ -1918,7 +1994,7 @@ def director_registration_targets():
         """
         SELECT *
         FROM registration_targets
-        WHERE academic_year_id = ?
+        WHERE academic_year_id = %s
         """,
         (year_id,)
     ).fetchone()
@@ -1955,13 +2031,13 @@ def director_registration_targets():
             conn.execute(
                 """
                 UPDATE registration_targets
-                SET total_students = ?,
-                    grade9_target = ?,
-                    grade10_target = ?,
-                    grade11_target = ?,
-                    grade12_target = ?,
+                SET total_students = %s,
+                    grade9_target = %s,
+                    grade10_target = %s,
+                    grade11_target = %s,
+                    grade12_target = %s,
                     updated_at = CURRENT_TIMESTAMP
-                WHERE academic_year_id = ?
+                WHERE academic_year_id = %s
                 """,
                 (
                     values["total_students"],
@@ -1984,7 +2060,7 @@ def director_registration_targets():
                     grade11_target,
                     grade12_target
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 """,
                 (
                     year_id,
@@ -2002,7 +2078,7 @@ def director_registration_targets():
             """
             SELECT *
             FROM registration_targets
-            WHERE academic_year_id = ?
+            WHERE academic_year_id = %s
             """,
             (year_id,)
         ).fetchone()
@@ -2042,7 +2118,7 @@ def director_academic_years():
             return redirect(url_for("director_academic_years"))
 
         existing = conn.execute(
-            "SELECT id FROM academic_years WHERE year_name = ?",
+            "SELECT id FROM academic_years WHERE year_name = %s",
             (year_name,)
         ).fetchone()
 
@@ -2055,7 +2131,7 @@ def director_academic_years():
                 """
                 UPDATE academic_years
                 SET is_active = 1
-                WHERE id = ?
+                WHERE id = %s
                 """,
                 (existing["id"],)
             )
@@ -2076,7 +2152,7 @@ def director_academic_years():
             """
             INSERT INTO academic_years
             (year_name, is_active)
-            VALUES (?, 1)
+            VALUES (%s, 1)
             """,
             (year_name,)
         )
@@ -2135,7 +2211,7 @@ def director_restore_academic_year(year_id):
         """
         SELECT *
         FROM academic_years
-        WHERE id = ?
+        WHERE id = %s
         """,
         (year_id,)
     ).fetchone()
@@ -2153,7 +2229,7 @@ def director_restore_academic_year(year_id):
         """
         UPDATE academic_years
         SET is_active = 1
-        WHERE id = ?
+        WHERE id = %s
         """,
         (year_id,)
     )
@@ -2175,6 +2251,7 @@ def director_restore_data():
         return redirect(url_for("director_login"))
 
     import shutil
+    import json
     from datetime import datetime
 
     os.makedirs("backups", exist_ok=True)
@@ -2182,7 +2259,77 @@ def director_restore_data():
     if request.method == "POST":
         action = request.form.get("action", "")
 
-        if action == "backup":
+        # PostgreSQL backup
+        if action == "backup" and os.environ.get("DATABASE_URL"):
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"school_backup_{timestamp}.json"
+            backup_path = os.path.join("backups", filename)
+
+            conn = get_db()
+
+            tables = conn.execute(
+                """
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND table_type = 'BASE TABLE'
+                ORDER BY table_name
+                """
+            ).fetchall()
+
+            backup_data = {}
+
+            for table in tables:
+                table_name = table["table_name"]
+
+                columns = conn.execute(
+                    """
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                      AND table_name = %s
+                    ORDER BY ordinal_position
+                    """,
+                    (table_name,)
+                ).fetchall()
+
+                column_names = [c["column_name"] for c in columns]
+
+                rows = conn.execute(
+                    f'SELECT * FROM "{table_name}"'
+                ).fetchall()
+
+                backup_data[table_name] = {
+                    "columns": column_names,
+                    "rows": [dict(row) for row in rows]
+                }
+
+            conn.close()
+
+            with open(backup_path, "w", encoding="utf-8") as f:
+                json.dump(
+                    backup_data,
+                    f,
+                    ensure_ascii=False,
+                    indent=2,
+                    default=str
+                )
+
+            conn = get_db()
+            conn.execute(
+                """
+                INSERT INTO system_backups (filename)
+                VALUES (%s)
+                """,
+                (filename,)
+            )
+            conn.commit()
+            conn.close()
+
+            flash("Database backup created successfully.")
+
+        # SQLite backup
+        elif action == "backup":
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"school_backup_{timestamp}.db"
             backup_path = os.path.join("backups", filename)
@@ -2199,7 +2346,7 @@ def director_restore_data():
             conn.execute(
                 """
                 INSERT INTO system_backups (filename)
-                VALUES (?)
+                VALUES (%s)
                 """,
                 (filename,)
             )
@@ -2208,6 +2355,83 @@ def director_restore_data():
 
             flash("Database backup created successfully.")
 
+        # PostgreSQL restore
+        elif action == "restore" and os.environ.get("DATABASE_URL"):
+            filename = request.form.get("filename", "").strip()
+            backup_path = os.path.join("backups", filename)
+
+            if not filename or not filename.endswith(".json"):
+                flash("Invalid PostgreSQL backup file.")
+                return redirect(url_for("director_restore_data"))
+
+            if not os.path.isfile(backup_path):
+                flash("Backup file not found.")
+                return redirect(url_for("director_restore_data"))
+
+            with open(backup_path, "r", encoding="utf-8") as f:
+                backup_data = json.load(f)
+
+            conn = get_db()
+
+            try:
+                tables = conn.execute(
+                    """
+                    SELECT table_name
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public'
+                      AND table_type = 'BASE TABLE'
+                    ORDER BY table_name
+                    """
+                ).fetchall()
+
+                table_names = [t["table_name"] for t in tables]
+
+                # Restore in dependency-safe order:
+                # disable foreign-key checks through deferred constraints
+                conn.execute("SET CONSTRAINTS ALL DEFERRED")
+
+                for table_name in reversed(table_names):
+                    if table_name in backup_data:
+                        conn.execute(f'DELETE FROM "{table_name}"')
+
+                for table_name, table_data in backup_data.items():
+                    if table_name not in table_names:
+                        continue
+
+                    columns = table_data.get("columns", [])
+                    rows = table_data.get("rows", [])
+
+                    if not columns or not rows:
+                        continue
+
+                    quoted_columns = ", ".join(
+                        f'"{column}"' for column in columns
+                    )
+                    placeholders = ", ".join(
+                        ["%s"] * len(columns)
+                    )
+
+                    query = (
+                        f'INSERT INTO "{table_name}" '
+                        f'({quoted_columns}) '
+                        f'VALUES ({placeholders})'
+                    )
+
+                    for row in rows:
+                        values = [row.get(column) for column in columns]
+                        conn.execute(query, values)
+
+                conn.commit()
+                flash("Database restored successfully.")
+
+            except Exception as e:
+                conn.rollback()
+                flash(f"Restore failed: {e}")
+
+            finally:
+                conn.close()
+
+        # SQLite restore
         elif action == "restore":
             filename = request.form.get("filename", "").strip()
 
@@ -2247,7 +2471,6 @@ def director_restore_data():
     )
 
 
-
 @app.route("/director/settings", methods=["GET", "POST"])
 def director_settings():
     if not session.get("director_logged_in"):
@@ -2262,8 +2485,8 @@ def director_settings():
             conn.execute(
                 """
                 UPDATE directors
-                SET full_name = ?
-                WHERE id = ?
+                SET full_name = %s
+                WHERE id = %s
                 """,
                 (full_name, session.get("director_id"))
             )
@@ -2281,7 +2504,7 @@ def director_settings():
         """
         SELECT *
         FROM directors
-        WHERE id = ?
+        WHERE id = %s
         """,
         (session.get("director_id"),)
     ).fetchone()
@@ -2315,7 +2538,7 @@ def student_dashboard():
 
     conn = get_db()
     student = conn.execute(
-        "SELECT * FROM students WHERE id = ?",
+        "SELECT * FROM students WHERE id = %s",
         (student_id,)
     ).fetchone()
 
@@ -2323,7 +2546,7 @@ def student_dashboard():
         """
         SELECT COUNT(*)
         FROM notifications
-        WHERE student_id = ? AND is_read = 0
+        WHERE student_id = %s AND is_read = 0
         """,
         (student_id,)
     ).fetchone()[0]
@@ -2356,7 +2579,7 @@ def student_notifications():
         """
         SELECT id, message, is_read, created_at
         FROM notifications
-        WHERE student_id = ?
+        WHERE student_id = %s
         ORDER BY created_at DESC, id DESC
         """,
         (student_id,)
