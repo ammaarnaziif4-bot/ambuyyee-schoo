@@ -237,6 +237,16 @@ def init_db():
 
     # Database backup records
     conn.execute(f"""
+        CREATE TABLE IF NOT EXISTS notifications (
+            id {ID_SQL},
+            student_id INTEGER NOT NULL,
+            message TEXT NOT NULL,
+            is_read INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    conn.execute(f"""
         CREATE TABLE IF NOT EXISTS registration_targets (
             id {ID_SQL},
             academic_year_id INTEGER NOT NULL UNIQUE,
@@ -299,6 +309,16 @@ def init_db():
 
     conn.commit()
     conn.close()
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    return app.send_static_file("robots.txt")
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    return app.send_static_file("sitemap.xml")
 
 
 @app.route("/")
